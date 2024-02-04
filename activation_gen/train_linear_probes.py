@@ -6,10 +6,10 @@ import ast
 from copy import deepcopy
 import os
 
-with open('enc_dict6.txt', 'r') as f:
+with open('../enc_dec_dicts/enc_dict6.txt', 'r') as f:
     enc_dict_data = f.read()
 
-with open('dec_dict6.txt', 'r') as f:
+with open('../enc_dec_dicts/dec_dict6.txt', 'r') as f:
     dec_dict_data = f.read()
 
 enc_dict = ast.literal_eval(enc_dict_data)
@@ -74,7 +74,7 @@ print(oth_output[1]['blocks.10.mlp.hook_pre'])
 #oth_mod.to('cpu')
 #just_games_ten = just_games_ten.to('cpu')
 
-lay = 4
+lay = 3
 
 def create_activation_data(htransformer, lay_num, games_ten):
     activation_data_list = []

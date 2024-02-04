@@ -7,7 +7,7 @@ import gen_oth_act
 #get model
 
 
-oth_mod = torch.load('40_12_90_6.mod')
+oth_mod = torch.load('40_12_90_6.pt')
 
 with open('enc_dict6.txt', 'r') as f:
     enc_dict_data = f.read()
@@ -34,7 +34,7 @@ class lin_prob(nn.Module):
         return self.innards(x)
 
 
-probe = torch.load('lay9/92_good_prob_1_1.mod')
+probe = torch.load('lay9/92_good_prob_1_1.pt')
 
 #get vectors from probe
 

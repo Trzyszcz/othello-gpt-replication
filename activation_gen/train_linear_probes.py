@@ -52,7 +52,7 @@ print(boards_me_ten[0][:, 1, 1])
 just_games = [encode(game_board_pair[0]) for game_board_pair in boards_me]
 just_games_ten = torch.tensor(just_games)
 
-oth_mod = torch.load('40_12_90_6.mod')
+oth_mod = torch.load('40_12_90_6.pt')
 """
 print(just_games[0])
 oth_output = oth_mod.run_with_cache(just_games_ten[0])
@@ -177,7 +177,7 @@ for epoch in range(epochs):
                 error_rate = errorfn(prob_1_1, vali_dl)
                 if error_rate > best_error:
                     print('NEW BEST')
-                    torch.save(prob_1_1, 'best_prob_1_1.mod')
+                    torch.save(prob_1_1, 'best_prob_1_1.pt')
                     best_error = error_rate
                     best_error_epoch = epoch + 1
         train_loss.backward()
@@ -186,8 +186,8 @@ for epoch in range(epochs):
 
 print('end of training')
 print(f'Best error: {best_error} during epoch {best_error_epoch}')
-best_prob_1_1 = torch.load('best_prob_1_1.mod')
+best_prob_1_1 = torch.load('best_prob_1_1.pt')
 print(errorfn(best_prob_1_1, vali_dl))
-torch.save(best_prob_1_1, f'lay{lay}/{int(best_error)}_good_prob_1_1.mod')
+torch.save(best_prob_1_1, f'lay{lay}/{int(best_error)}_good_prob_1_1.pt')
 #os.mkdir(f'100k/lay{lay}')
-#torch.save(best_prob_1_1, f'100k/lay{lay}/{int(best_error)}_good_prob_1_1.mod')
+#torch.save(best_prob_1_1, f'100k/lay{lay}/{int(best_error)}_good_prob_1_1.pt')

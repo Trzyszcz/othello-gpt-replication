@@ -149,7 +149,7 @@ cfg = HookedTransformerConfig(n_layers=8, d_model=320, n_ctx=32, d_head=40, d_vo
 
 oth_net = HookedTransformer(cfg)
 
-#oth_net = torch.load('best_oth_mod.mod')
+#oth_net = torch.load('best_oth_mod.pt')
 
 if torch.cuda.is_available():
     oth_net.to('cuda')
@@ -213,7 +213,7 @@ for epoch in range(epochs):
             print(f'{percent_of_cor}% of correct moves')
 
             if percent_of_cor > best_result:
-                torch.save(oth_net, 'best_oth_mod.mod')
+                torch.save(oth_net, 'best_oth_mod.pt')
                 print(f'change best result to {percent_of_cor}')
                 best_result = percent_of_cor
                 best_recult_epoch = epoch + 1
@@ -225,7 +225,7 @@ for epoch in range(epochs):
                 current_result = cor_num_of_moves(oth_net, val_iter, val_dl, uniform=False)
                 if current_result > best_result:
                     print(f'NEW BEST epoch {epoch + 1} correct {current_result}')
-                    torch.save(oth_net, 'best_oth_mod.mod')
+                    torch.save(oth_net, 'best_oth_mod.pt')
                     #print(f'change best result to {current_result}')
                     best_result = current_result
                     best_result_epoch = epoch + 1
@@ -241,11 +241,11 @@ current_time = now.strftime('%H:%M:%S')
 print(f'Start training {current_time_start}')
 print(f'End training {current_time}')
 
-torch.save(oth_net, 'oth_mod.mod')
+torch.save(oth_net, 'oth_mod.pt')
 
 
 
-#oth_net = torch.load('activation_gen/40_12_90_6.mod')
+#oth_net = torch.load('activation_gen/40_12_90_6.pt')
 
 #print(oth_net.generate(input=torch.tensor([encode(['s'])]), max_new_tokens=13, stop_at_eos=False, return_type='tensor', padding_side='right'))
 #print(encode(['s']))

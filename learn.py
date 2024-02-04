@@ -142,7 +142,7 @@ for epoch in range(epochs):
             current_result = check_model(oth_net)
             print(f'epoch {epoch + 1}')
             if current_result > best_result:
-                torch.save(oth_net, 'best_oth_mod.mod')
+                torch.save(oth_net, 'best_oth_mod.pt')
                 #print(f'change best result to {current_result}')
                 best_result = current_result * 2
                 best_result_epoch = epoch + 1
@@ -151,11 +151,11 @@ for epoch in range(epochs):
 
 print(f'best result: {best_result} in epoch {best_result_epoch}')
 
-torch.save(oth_net, 'oth_mod.mod')
+torch.save(oth_net, 'oth_mod.pt')
 
 
 
-#oth_net = torch.load('oth_mod2.mod')
+#oth_net = torch.load('oth_mod2.pt')
 
 #print(oth_net.generate(input=torch.tensor([encode(['s'])]), max_new_tokens=13, stop_at_eos=False, return_type='tensor', padding_side='right'))
 #print(encode(['s']))

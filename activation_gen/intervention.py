@@ -9,10 +9,10 @@ import gen_oth_act
 
 oth_mod = torch.load('40_12_90_6.pt')
 
-with open('enc_dict6.txt', 'r') as f:
+with open('../enc_dec_dicts/enc_dict6.txt', 'r') as f:
     enc_dict_data = f.read()
 
-with open('dec_dict6.txt', 'r') as f:
+with open('../enc_dec_dicts/dec_dict6.txt', 'r') as f:
     dec_dict_data = f.read()
 
 enc_dict = ast.literal_eval(enc_dict_data)

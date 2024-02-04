@@ -9,6 +9,31 @@ import gen_oth
 from gen_oth import how_many_correct_moves
 from datetime import datetime
 
+def create_enc_dec_dicts(vocab, board_size):
+    enc_dict = {tok:num for num, tok in enumerate(vocab)}
+    dec_dict = {num:tok for num, tok in enumerate(vocab)}
+
+    with open(f'enc_dec_dicts/enc_dict{board_size}.txt', 'x') as f:
+        f.write(enc_dict.__str__())
+
+    with open(f'enc_dec_dicts/dec_dict{board_size}.txt', 'x') as f:
+        f.write(dec_dict.__str__())
+
+    return enc_dict, dec_dict
+
+def read_enc_dec_dicts(board_size):
+    with open(f'enc_dec_dicts/enc_dict{board_size}.txt', 'r') as f:
+        enc_dict_data = f.read()
+
+    with open(f'enc_dec_dicts/dec_dict{board_size}.txt', 'r') as f:
+        dec_dict_data = f.read()
+
+    enc_dict = ast.literal_eval(enc_dict_data)
+    dec_dict = ast.literal_eval(dec_dict_data)
+
+    return enc_dict, dec_dict
+
+
 data_file = open('data6.txt', 'r')
 lines = []
 for line in data_file:
@@ -26,25 +51,8 @@ vocab_size = len(vocab)
 
 print(f'Data size: {data_size}')
 print(f'Vocab size: {vocab_size}')
-"""
-enc_dict = {tok:num for num, tok in enumerate(vocab)}
-dec_dict = {num:tok for num, tok in enumerate(vocab)}
 
-with open('enc_dict6.txt', 'x') as f:
-    f.write(enc_dict.__str__())
-
-with open('dec_dict6.txt', 'x') as f:
-    f.write(dec_dict.__str__())
-"""
-
-with open('enc_dict6.txt', 'r') as f:
-    enc_dict_data = f.read()
-
-with open('dec_dict6.txt', 'r') as f:
-    dec_dict_data = f.read()
-
-enc_dict = ast.literal_eval(enc_dict_data)
-dec_dict = ast.literal_eval(dec_dict_data)
+enc_dict, dec_dict = read_enc_dec_dicts(6)
 
 encode = lambda tok_lst: [enc_dict[tok] for tok in tok_lst]
 decode = lambda num_lst: [dec_dict[num] for num in num_lst]
@@ -168,56 +176,11 @@ best_result_epoch = 0
 
 for epoch in range(epochs):
     for idx, (train_in, train_tar) in enumerate(train_dl):
-        '''
-        print(train_tar.shape)
-        print(train_tar[0])
-        opt.zero_grad()
-        train_pred = oth_net(train_in)
-        print('\n \npred \n \n')
-        print(train_pred.shape)
-        print(train_pred[0])
-        train_loss = lossfn(train_pred, train_tar)
-        '''
         opt.zero_grad()
         train_loss = oth_net(train_in, return_type='loss')
         #print(train_loss.shape)
         if idx%100==0:
             print(f'Train loss:{train_loss.item()}')
-        '''
-        if idx%500==0:
-            #print(f'Train loss: {train_loss.item()}')
-            try:
-                val_in, val_tar = next(val_iter)
-            except StopIteration:
-                val_iter = iter(val_dl)
-                val_in, val_tar = next(val_iter)
-
-            logits = oth_net(val_in, return_type='logits')
-            probs = nn.functional.softmax(logits, dim=-1)
-            number_of_correct_moves = 0
-            number_of_moves = 0
-
-            for i in range(len(probs)):
-                #print(logits[i])
-                moves_encoded = torch.multinomial(probs[i], 1)
-                game = torch.squeeze(moves_encoded)
-                #print(game.shape)
-                moves_list = game.tolist()
-                number_of_moves += len(moves_list)
-                moves_list_decoded = decode(moves_list)
-                actual_moves = decode(val_in[i].tolist()[1:])
-                number_of_correct_moves += how_many_correct_moves(6, actual_moves, moves_list_decoded)
-
-            percent_of_cor = (number_of_correct_moves/number_of_moves) * 100
-
-            print(f'{percent_of_cor}% of correct moves')
-
-            if percent_of_cor > best_result:
-                torch.save(oth_net, 'best_oth_mod.pt')
-                print(f'change best result to {percent_of_cor}')
-                best_result = percent_of_cor
-                best_recult_epoch = epoch + 1
-        '''
         
         if idx%200==0:
             with torch.no_grad():
@@ -243,44 +206,5 @@ print(f'End training {current_time}')
 
 torch.save(oth_net, 'oth_mod.pt')
 
-
-
-#oth_net = torch.load('activation_gen/40_12_90_6.pt')
-
-#print(oth_net.generate(input=torch.tensor([encode(['s'])]), max_new_tokens=13, stop_at_eos=False, return_type='tensor', padding_side='right'))
-#print(encode(['s']))
-#print(oth_net.generate(input=torch.tensor([encode(['s'])]), stop_at_eos=False))
-
-#print(games)
-
 check_model(oth_net)
 print(cor_num_of_moves(oth_net, val_iter, val_dl, uniform=False))
-"""
-input_tok = torch.tensor([encode(['s' for _ in range(12)])])
-gen_game = []
-
-for i in range(11):
-    logits = oth_net.forward(input_tok)
-    #print(logits[0][0])
-    prob = nn.functional.softmax(logits, dim=-1)
-    #print(prob[0][0])
-    show_moves_from_tensor(prob[0][i])
-    token = torch.multinomial(prob[0][i], 1)
-    #print(output_tok.shape)
-    print(decode(token.tolist()))
-    gen_game.append(token.item())
-    input_tok[0][i+1] = token.item()
-
-print(decode(gen_game))
-"""
-'''
-logits = oth_net.forward(input_tok)
-print(logits[0][1])
-prob = nn.functional.softmax(logits, dim=-1)
-print(prob[0][1])
-show_moves_from_tensor(prob[0][1])
-token = torch.multinomial(prob[0][1], 1)
-#print(output_tok.shape)
-print(decode(token.tolist()))
-'''
-

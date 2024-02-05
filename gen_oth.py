@@ -391,5 +391,6 @@ def pvp_game(board_size):
         #print(game1.find_legal_moves(color[turn]))
         inp = input()
 
-pvp_game(6)
+if __name__ == '__main__':
+    pvp_game(6)
 

@@ -264,6 +264,7 @@ class oth:
         return False
 
 def check_game(board_size, notated_game):
+    #check if notated_game contains only legal moves
     color = ['b', 'w']
     game = oth(board_size)
     for turn, move in enumerate(notated_game):
@@ -310,72 +311,32 @@ def how_many_correct_moves(board_size, actual_game, guessed_game):
             correct_moves = ['p']
     return num_correct
 
-    
-        
- 
-
-
-"""
-data_file = open('data.txt', 'r')
-first_games = []
-for i in range(5):
-    first_games.append(data_file.readline()) #here was a bug! first_games[i]
-    first_games[i] = first_games[i].split(", ")[:-1]
-data_file.close()
-
-for game_to_check in first_games:
-    print(check_game(4, game_to_check))
-
-print('GEN GAME')
-gen_game = ['C3', 'D3', 'B0', 'B3', 'D2', 'C0', 'D0', 'A1', 'A0', 'D1', 'A3']
-print(check_game(4, gen_game))
-"""
-"""
-color = ['b', 'w']
-
-for i in range(100000):
-    game = oth(4)
-    move = 0
-    moves = []
-    while len(game.find_legal_moves(color[move%2])) != 0:
-        moves.append(game.comp_move(color[move%2]))
-        move += 1
-    while len(moves) < 12:
-        moves.append('p')
-    for tok in moves:
-        data_file.write(tok + ', ')
-    data_file.write('\n')
-
-data_file.close()
-
-
-"""
-"""
-game1 = oth(4)
-game1.print_board()
-turn = 0
-color = ['b', 'w']
-while True:
-    if turn == 0:
-        #print(game1.find_legal_moves(color[turn]))
-        inp = input()
-        if inp == 'q':
-            break
-        x, y = inp.split()
-        while not game1.move(int(game1.dec_dict[x]), int(y), color[turn]):
+def pvc_game(board_size):
+    game1 = oth(board_size)
+    game1.print_board()
+    turn = 0
+    color = ['b', 'w']
+    while True:
+        if turn == 0:
+            #print(game1.find_legal_moves(color[turn]))
             inp = input()
             if inp == 'q':
                 break
             x, y = inp.split()
-    else:
-        game1.comp_move(color[turn])
-    game1.print_board()
-    if len(game1.find_legal_moves(color[(turn+1)%2])) == 0:
-        print(f"{color[turn]} wins")
-        break
-    turn = (turn+1)%2
-    #print(game1.find_legal_moves(color[turn]))
-"""
+            while not game1.move(int(game1.dec_dict[x]), int(y), color[turn]):
+                inp = input()
+                if inp == 'q':
+                    break
+                x, y = inp.split()
+        else:
+            game1.comp_move(color[turn])
+        game1.print_board()
+        if len(game1.find_legal_moves(color[(turn+1)%2])) == 0:
+            print(f"{color[turn]} wins")
+            break
+        turn = (turn+1)%2
+        #print(game1.find_legal_moves(color[turn]))
+
 def pvp_game(board_size):
     game1 = oth(board_size)
     game1.print_board()

@@ -311,6 +311,28 @@ def how_many_correct_moves(board_size, actual_game, guessed_game):
             correct_moves = ['p']
     return num_correct
 
+def generate_games(board_size, dataset_size):
+    color = ['b', 'w']
+
+    data_file = open(f'data/data{board_size}.txt', 'w')
+
+    for i in range(data_set_size):
+        game = oth(board_size)
+        move = 0
+        moves = []
+        while len(game.find_legal_moves(color[move%2])) != 0:
+            moves.append(game.comp_move(color[move%2]))
+            move += 1
+        while len(moves) < ((board_size**2) - 4):
+            moves.append('p')
+        #print(moves)
+        for tok in moves:
+            data_file.write(tok + ', ')
+        data_file.write('\n')
+
+    data_file.close()
+
+
 def pvc_game(board_size):
     game1 = oth(board_size)
     game1.print_board()

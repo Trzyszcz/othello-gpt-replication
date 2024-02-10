@@ -7,27 +7,6 @@ from copy import deepcopy
 import os
 from train_nets import read_enc_dec_dicts
 
-""""
-with open('../enc_dec_dicts/enc_dict6.txt', 'r') as f:
-    enc_dict_data = f.read()
-
-with open('../enc_dec_dicts/dec_dict6.txt', 'r') as f:
-    dec_dict_data = f.read()
-
-enc_dict = ast.literal_eval(enc_dict_data)
-dec_dict = ast.literal_eval(dec_dict_data)
-
-encode = lambda tok_lst: [enc_dict[tok] for tok in tok_lst]
-decode = lambda num_lst: [dec_dict[num] for num in num_lst]
-"""
-
-enc_dict, dec_dict, encode, decode = read_enc_dec_dicts(6)
-
-print(decode(encode(['A0', 'B0', 'p'])))
-
-with open('activation_gen/data_boards_me.txt', 'r') as f:
-    data_boards_me = f.read()
-
 boards_me = ast.literal_eval(data_boards_me)
 print(f'Data set size: {len(boards_me)}')
 #cut_out = int((1/50) * len(boards_me))
@@ -57,7 +36,7 @@ print(boards_me_ten[0][:, 1, 1])
 just_games = [encode(game_board_pair[0]) for game_board_pair in boards_me]
 just_games_ten = torch.tensor(just_games)
 
-oth_mod = torch.load('activation_gen/40_12_90_6.pt')
+oth_mod = torch.load('nets/99_good.pt')
 """
 print(just_games[0])
 oth_output = oth_mod.run_with_cache(just_games_ten[0])
@@ -79,7 +58,7 @@ print(oth_output[1]['blocks.10.mlp.hook_pre'])
 #oth_mod.to('cpu')
 #just_games_ten = just_games_ten.to('cpu')
 
-lay = 2
+lay = 8
 
 def create_activation_data(htransformer, lay_num, games_ten):
     activation_data_list = []
@@ -171,18 +150,13 @@ for epoch in range(epochs):
         opt.zero_grad()
         train_pred = prob_1_1(train_in)
         train_loss = lossfn(train_pred, train_tar)
-        #if idx%10==0:
-        #print(train_loss.item())
-        #if train_loss.item() < best_loss:
-        #    best_loss = train_loss.item()
-        #    best_loss_epoch = epoch + 1
         if idx%10==0:
             with torch.no_grad():
                 print(train_loss.item())
                 error_rate = errorfn(prob_1_1, vali_dl)
                 if error_rate > best_error:
                     print('NEW BEST')
-                    torch.save(prob_1_1, 'activation_gen/best_prob_1_1.pt')
+                    torch.save(prob_1_1, 'probes/best_prob_1_1.pt')
                     best_error = error_rate
                     best_error_epoch = epoch + 1
         train_loss.backward()
@@ -191,8 +165,6 @@ for epoch in range(epochs):
 
 print('end of training')
 print(f'Best error: {best_error} during epoch {best_error_epoch}')
-best_prob_1_1 = torch.load('activation_gen/best_prob_1_1.pt')
+best_prob_1_1 = torch.load('probes/best_prob_1_1.pt')
 print(errorfn(best_prob_1_1, vali_dl))
-torch.save(best_prob_1_1, f'activation_gen/lay{lay}/{int(best_error)}_good_prob_1_1.pt')
-#os.mkdir(f'100k/lay{lay}')
-#torch.save(best_prob_1_1, f'100k/lay{lay}/{int(best_error)}_good_prob_1_1.pt')
+torch.save(best_prob_1_1, f'probes/{int(best_error)}_good_prob_lay{lay}_1_1.pt')

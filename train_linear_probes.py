@@ -5,7 +5,14 @@ import transformer_lens
 import ast
 from copy import deepcopy
 import os
-from train_nets import read_enc_dec_dicts
+from train_nets import read_enc_dec_dicts, read_enc_dec_dicts
+
+enc_dict, dec_dict, encode, decode = read_enc_dec_dicts(6)
+
+print(decode(encode(['A0', 'B0', 'p'])))
+
+with open('data/data_boards_me.txt', 'r') as f:
+    data_boards_me = f.read()
 
 boards_me = ast.literal_eval(data_boards_me)
 print(f'Data set size: {len(boards_me)}')
@@ -58,7 +65,7 @@ print(oth_output[1]['blocks.10.mlp.hook_pre'])
 #oth_mod.to('cpu')
 #just_games_ten = just_games_ten.to('cpu')
 
-lay = 8
+lay = 5
 
 def create_activation_data(htransformer, lay_num, games_ten):
     activation_data_list = []
@@ -109,7 +116,7 @@ class lin_prob(nn.Module):
     def __init__(self):
         super().__init__()
         self.innards = nn.Sequential(
-                nn.Linear(360, 3, bias=False)
+                nn.Linear(1280, 3, bias=False)
                 )
     def forward(self, x):
         return self.innards(x)

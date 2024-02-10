@@ -3,24 +3,14 @@ from torch import nn
 import transformer_lens
 import ast
 import gen_oth
-from train_nets import show_moves_from_tensor
+from train_nets import show_moves_from_tensor, read_enc_dec_dicts
 
 #get model
 
 
 oth_mod = torch.load('activation_gen/40_12_90_6.pt')
 
-with open('enc_dec_dicts/enc_dict6.txt', 'r') as f:
-    enc_dict_data = f.read()
-
-with open('enc_dec_dicts/dec_dict6.txt', 'r') as f:
-    dec_dict_data = f.read()
-
-enc_dict = ast.literal_eval(enc_dict_data)
-dec_dict = ast.literal_eval(dec_dict_data)
-
-encode = lambda tok_lst: [enc_dict[tok] for tok in tok_lst]
-decode = lambda num_lst: [dec_dict[num] for num in num_lst]
+enc_dict, dec_dict, encode, decode = read_enc_dec_dicts(6)
 
 print(decode(encode(['A0', 'B0', 'p'])))
 

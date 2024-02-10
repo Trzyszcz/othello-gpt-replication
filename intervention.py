@@ -2,17 +2,18 @@ import torch
 from torch import nn
 import transformer_lens
 import ast
-import gen_oth_act
+import gen_oth
+from train_nets import show_moves_from_tensor
 
 #get model
 
 
-oth_mod = torch.load('40_12_90_6.pt')
+oth_mod = torch.load('activation_gen/40_12_90_6.pt')
 
-with open('../enc_dec_dicts/enc_dict6.txt', 'r') as f:
+with open('enc_dec_dicts/enc_dict6.txt', 'r') as f:
     enc_dict_data = f.read()
 
-with open('../enc_dec_dicts/dec_dict6.txt', 'r') as f:
+with open('enc_dec_dicts/dec_dict6.txt', 'r') as f:
     dec_dict_data = f.read()
 
 enc_dict = ast.literal_eval(enc_dict_data)
@@ -34,7 +35,7 @@ class lin_prob(nn.Module):
         return self.innards(x)
 
 
-probe = torch.load('lay9/92_good_prob_1_1.pt')
+probe = torch.load('activation_gen/lay9/92_good_prob_1_1.pt')
 
 #get vectors from probe
 
@@ -57,7 +58,7 @@ game_to_inter_enc = torch.tensor(encode(['s'] + game_to_inter[:-1]))
 
 #print board state after some move
 
-game1 = gen_oth_act.oth(6)
+game1 = gen_oth.oth(6)
 turn = 0
 color = ['b', 'w']
 x, y = 'B 2'.split()
@@ -69,12 +70,6 @@ turn = (turn+1)%2
 game1.print_board()
 
 #print suggested moves
-
-def show_moves_from_tensor(tens):
-    for i in range(len(tens)):
-        if tens[i].item() >= 0.0001:
-            print('{} : {:.3f}'.format(decode([i])[0], tens[i].item()))
-
 
 logits = oth_mod.forward(game_to_inter_enc)
 #print(logits.shape)

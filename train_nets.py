@@ -40,8 +40,11 @@ def read_enc_dec_dicts(board_size):
     return enc_dict, dec_dict, encode, decode
 
 def show_moves_from_tensor(tens):
+    _, _, _, decode = read_enc_dec_dicts(6)
+
     for i in range(len(tens)):
-        print('{} : {:.3f}'.format(decode([i])[0], tens[i].item()))
+        if tens[i].item() >= 0.0001:
+            print('{} : {:.3f}'.format(decode([i])[0], tens[i].item()))
 
 if __name__ == '__main__':
     data_file = open('data6.txt', 'r')
@@ -156,7 +159,7 @@ if __name__ == '__main__':
         return percent_of_cor
 
     #cfg = HookedTransformerConfig(n_layers=12, d_model=90, n_ctx=32, d_head=6, d_vocab=vocab_size, act_fn='gelu')
-    cfg = HookedTransformerConfig(n_layers=8, d_model=320, n_ctx=32, d_head=40, d_vocab=vocab_size, act_fn='gelu')
+    cfg = HookedTransformerConfig(n_layers=8, d_model=480, n_ctx=32, d_head=60, d_vocab=vocab_size, act_fn='gelu')
 
     oth_net = HookedTransformer(cfg)
 

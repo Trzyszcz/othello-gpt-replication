@@ -1,4 +1,7 @@
 import random
+from copy import deepcopy
+import ast
+from datetime import datetime
 
 class oth:
     def __init__(self, board_size):
@@ -284,6 +287,13 @@ def check_game(board_size, notated_game):
             return False
     return True
 
+def gen_board_state_data_set(board_size):
+    color = ['b', 'w']
+    game = oth(board_size)
+    
+    cells_state = {game.enc_dict[row]+str(column):[] for row in range(board_size) for column in range(board_size)}
+    print(cells_state)
+
 def how_many_correct_moves(board_size, actual_game, guessed_game):
     #function checks if i move in guessed game is correct in context of actual_game[:i]
     num_correct = 0
@@ -311,27 +321,85 @@ def how_many_correct_moves(board_size, actual_game, guessed_game):
             correct_moves = ['p']
     return num_correct
 
-def generate_games(board_size, dataset_size):
+def generate_game(board_size, whole_board_state=False):
     color = ['b', 'w']
+    game = oth(board_size)
+    move = 0
+    moves = []
+    if whole_board_state:
+        stack_board_states = []
+        stack_board_states.append(deepcopy(game.board))
+    while len(game.find_legal_moves(color[move%2])) != 0:
+        moves.append(game.comp_move(color[move%2]))
+        move += 1
+        if whole_board_state:
+            stack_board_states.append(deepcopy(game.board))
+    while len(moves) < ((board_size**2) - 4):
+        moves.append('p')
+    if not whole_board_state:
+        return moves
+    else:
+        return [moves, stack_board_states]
+
+def generate_games(board_size, number_of_games, whole_board_state=False):
 
     data_file = open(f'data/data{board_size}.txt', 'w')
-
-    for i in range(data_set_size):
-        game = oth(board_size)
-        move = 0
-        moves = []
-        while len(game.find_legal_moves(color[move%2])) != 0:
-            moves.append(game.comp_move(color[move%2]))
-            move += 1
-        while len(moves) < ((board_size**2) - 4):
-            moves.append('p')
-        #print(moves)
+    for i in range(number_of_games):
+        moves = generate_game(board_size, whole_board_state)
         for tok in moves:
             data_file.write(tok + ', ')
         data_file.write('\n')
-
     data_file.close()
 
+def generate_games_boards(board_size, number_of_games, whole_board_state=True):
+    data_bw_file = open(f'data/data_boards_bw_{number_of_games}.txt', 'w')
+    data_me_file = open(f'data/data_boards_me_{number_of_games}.txt', 'w')
+    data_bw = []
+    data_me = []
+    for i in range(number_of_games):
+        moves = generate_game(board_size, whole_board_state)
+        data_bw.append(moves)
+        data_me.append([moves[0], change_wb_to_my_enemys(moves[1])])
+        if i % 1000 == 0:
+            print('.', end='')
+    data_bw_file.write(data_bw.__str__())
+    data_me_file.write(data_me.__str__())
+    data_bw_file.close()
+    data_me_file.close()
+    print('\n')
+
+#on black on even moves, white on odd ones
+def change_wb_to_my_enemys(stack_board_states):
+    changed_stack_board_states = []
+    for move_idx in range(len(stack_board_states)):
+        changed_board_state = []
+        for row in stack_board_states[move_idx]:
+            changed_row = []
+            for cell in row:
+                changed_cell = 'x'
+                if move_idx%2==0:
+                    if cell=='b':
+                        changed_cell = 'm'
+                    if cell=='w':
+                        changed_cell = 'e'
+                if move_idx%2==1:
+                    if cell=='b':
+                        changed_cell = 'e'
+                    if cell=='w':
+                        changed_cell = 'm'
+                changed_row.append(changed_cell)
+            changed_board_state.append(changed_row)
+        changed_stack_board_states.append(changed_board_state)
+    return changed_stack_board_states
+
+def generate_data_for_act_learning():
+    now = datetime.now()
+    current_time = now.strftime('%H:%M:%S')
+    print(f'Start generating {current_time}')
+    generate_games_boards(6, 100000)
+    now = datetime.now()
+    current_time = now.strftime('%H:%M:%S')
+    print(f'Finished {current_time}')
 
 def pvc_game(board_size):
     game1 = oth(board_size)

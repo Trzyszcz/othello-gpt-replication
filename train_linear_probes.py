@@ -7,6 +7,98 @@ from copy import deepcopy
 import os
 from train_nets import read_enc_dec_dicts, read_enc_dec_dicts
 
+def create_activation_data(htransformer, lay_num, games_ten):
+    activation_data_list = []
+    for i in range(100):
+        activation_data_part = htransformer.run_with_cache(games_ten[i*100:(i+1)*100], names_filter=f'blocks.{lay_num}.mlp.hook_pre', device='cpu')[1][f'blocks.{lay_num}.mlp.hook_pre']
+        activation_data_list.append(activation_data_part)
+
+    activation_data = torch.cat(activation_data_list, dim=0)
+    print(activation_data.shape)
+    if torch.cuda.is_available():
+        activation_data = activation_data.to('cuda')
+    return activation_data
+
+class act_to_cell_state(Dataset):
+    def __init__(self, cell_coord_x, cell_coord_y, activations, boards):
+        self.size = len(activations)
+        self.act_cell_state_pairs = []
+        for i in range(self.size):
+            cell_states = boards[i][:, cell_coord_y, cell_coord_y]
+            for j in range(32):
+                act = activations[i][j]
+                cell_state = cell_states[j+1]
+                if torch.cuda.is_available():
+                    cell_state = cell_state.to('cuda')
+                self.act_cell_state_pairs.append([act, cell_state])
+    def __len__(self):
+        return self.size
+    def __getitem__(self, idx):
+        X = self.act_cell_state_pairs[idx][0]
+        y = self.act_cell_state_pairs[idx][1]
+        return X, y
+
+class lin_prob(nn.Module):
+    def __init__(self, act_space_size):
+        super().__init__()
+        self.innards = nn.Sequential(
+                nn.Linear(act_space_size, 3, bias=False)
+                )
+    def forward(self, x):
+        return self.innards(x)
+
+def errorfn(transformer, val_dl):
+    dl_len = 0
+    num_of_corr = 0
+    for val_in, val_tar in val_dl:
+        val_pred = transformer(val_in)
+        quess = torch.argmax(val_pred, dim=-1)
+        #tar = torch.argmax(val_tar, dim=-1)
+        for i in range(len(quess)):
+            dl_len += 1
+            if quess[i] == val_tar[i]:
+                num_of_corr += 1
+    perc_of_corr = (num_of_corr/dl_len)*100
+    return perc_of_corr
+
+def train_probe(probe, train_dataloader, val_dataloader, coords, layer): 
+    lossfn = nn.CrossEntropyLoss()
+    opt = torch.optim.Adam(probe.parameters(), lr=5e-6)
+
+    epochs = 800
+
+    print('start training')
+
+    best_loss = 30
+    best_loss_epoch = 1
+
+    best_error = 0
+    best_error_epoch = 0
+
+    for epoch in range(epochs):
+        for idx, (train_in, train_tar) in enumerate(train_dataloader):
+            opt.zero_grad()
+            train_pred = probe(train_in)
+            train_loss = lossfn(train_pred, train_tar)
+            if idx%10==0:
+                with torch.no_grad():
+                    print(train_loss.item())
+                    error_rate = errorfn(probe, val_dataloader)
+                    if error_rate > best_error:
+                        print('NEW BEST')
+                        torch.save(probe, f'probes/best_prob_{coords[0]}_{coords[1]}_lay{lay}.pt')
+                        best_error = error_rate
+                        best_error_epoch = epoch + 1
+            train_loss.backward()
+            opt.step()
+        print(f'End of epoch {epoch + 1}')
+
+    print('end of training')
+    print(f'Best error: {best_error} during epoch {best_error_epoch}')
+    best_probe = torch.load(f'probes/best_prob_{coords[0]}_{coords[1]}_lay{lay}.pt')
+    print(errorfn(best_probe, vali_dl))
+    torch.save(best_probe, f'probes/{int(best_error)}_good_prob_{coords[0]}_{coords[1]}_lay{lay}.pt')
+
 enc_dict, dec_dict, encode, decode = read_enc_dec_dicts(6)
 
 print(decode(encode(['A0', 'B0', 'p'])))
@@ -44,62 +136,11 @@ just_games = [encode(game_board_pair[0]) for game_board_pair in boards_me]
 just_games_ten = torch.tensor(just_games)
 
 oth_mod = torch.load('nets/99_good.pt')
-"""
-print(just_games[0])
-oth_output = oth_mod.run_with_cache(just_games_ten[0])
-#shape of hook [batch, pos, mlp_dim]
-print(oth_output[1]['blocks.10.mlp.hook_post'].shape)
-print(oth_output[1]['blocks.10.mlp.hook_post'])
-print(oth_output[1])
 
-oth_output = oth_mod.run_with_cache(just_games_ten[:10])
-print(oth_output[1]['blocks.10.mlp.hook_post'].shape)
-#print(oth_mod.device)
-"""
-"""
-oth_output = oth_mod.run_with_cache(just_games_ten[0])
-print(oth_output[1]['blocks.10.mlp.hook_pre'].shape)
-print(oth_output[1]['blocks.10.mlp.hook_pre'])
-"""
-
-#oth_mod.to('cpu')
-#just_games_ten = just_games_ten.to('cpu')
-
-lay = 5
-
-def create_activation_data(htransformer, lay_num, games_ten):
-    activation_data_list = []
-    for i in range(100):
-        activation_data_part = htransformer.run_with_cache(games_ten[i*100:(i+1)*100], names_filter=f'blocks.{lay_num}.mlp.hook_pre', device='cpu')[1][f'blocks.{lay_num}.mlp.hook_pre']
-        activation_data_list.append(activation_data_part)
-
-    activation_data = torch.cat(activation_data_list, dim=0)
-    print(activation_data.shape)
-    if torch.cuda.is_available():
-        activation_data = activation_data.to('cuda')
-    return activation_data
+lay = 4
 
 activation_data_10 = create_activation_data(oth_mod, lay, just_games_ten)
 #print(activation_data_10)
-
-class act_to_cell_state(Dataset):
-    def __init__(self, cell_coord_x, cell_coord_y, activations, boards):
-        self.size = len(activations)
-        self.act_cell_state_pairs = []
-        for i in range(self.size):
-            cell_states = boards[i][:, cell_coord_y, cell_coord_y]
-            for j in range(32):
-                act = activations[i][j]
-                cell_state = cell_states[j+1]
-                if torch.cuda.is_available():
-                    cell_state = cell_state.to('cuda')
-                self.act_cell_state_pairs.append([act, cell_state])
-    def __len__(self):
-        return self.size
-    def __getitem__(self, idx):
-        X = self.act_cell_state_pairs[idx][0]
-        y = self.act_cell_state_pairs[idx][1]
-        return X, y
 
 cutoff = int(0.9*len(boards_me_ten))
 train_activation_data_10 = activation_data_10[:cutoff]
@@ -112,66 +153,8 @@ vali_dataset = act_to_cell_state(1, 1, val_activation_data_10, val_boards_me_ten
 train_dl = DataLoader(train_dataset, batch_size=100, shuffle=True)
 vali_dl = DataLoader(vali_dataset, batch_size=100, shuffle=True)
 
-class lin_prob(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.innards = nn.Sequential(
-                nn.Linear(1280, 3, bias=False)
-                )
-    def forward(self, x):
-        return self.innards(x)
-
-prob_1_1 = lin_prob()
+prob_1_1 = lin_prob(1280)
 if torch.cuda.is_available():
     prob_1_1.to('cuda')
 
-def errorfn(transformer, val_dl):
-    dl_len = 0
-    num_of_corr = 0
-    for val_in, val_tar in val_dl:
-        val_pred = transformer(val_in)
-        quess = torch.argmax(val_pred, dim=-1)
-        #tar = torch.argmax(val_tar, dim=-1)
-        for i in range(len(quess)):
-            dl_len += 1
-            if quess[i] == val_tar[i]:
-                num_of_corr += 1
-    perc_of_corr = (num_of_corr/dl_len)*100
-    return perc_of_corr
-
-lossfn = nn.CrossEntropyLoss()
-opt = torch.optim.Adam(prob_1_1.parameters(), lr=5e-6)
-
-epochs = 800
-
-print('start training')
-
-best_loss = 30
-best_loss_epoch = 1
-
-best_error = 0
-best_error_epoch = 0
-
-for epoch in range(epochs):
-    for idx, (train_in, train_tar) in enumerate(train_dl):
-        opt.zero_grad()
-        train_pred = prob_1_1(train_in)
-        train_loss = lossfn(train_pred, train_tar)
-        if idx%10==0:
-            with torch.no_grad():
-                print(train_loss.item())
-                error_rate = errorfn(prob_1_1, vali_dl)
-                if error_rate > best_error:
-                    print('NEW BEST')
-                    torch.save(prob_1_1, 'probes/best_prob_1_1.pt')
-                    best_error = error_rate
-                    best_error_epoch = epoch + 1
-        train_loss.backward()
-        opt.step()
-    print(f'End of epoch {epoch + 1}')
-
-print('end of training')
-print(f'Best error: {best_error} during epoch {best_error_epoch}')
-best_prob_1_1 = torch.load('probes/best_prob_1_1.pt')
-print(errorfn(best_prob_1_1, vali_dl))
-torch.save(best_prob_1_1, f'probes/{int(best_error)}_good_prob_lay{lay}_1_1.pt')
+train_probe(prob_1_1, train_dl, vali_dl, [1, 1], lay)

@@ -96,7 +96,7 @@ def train_probe(probe, train_dataloader, val_dataloader, coords, layer):
     print('end of training')
     print(f'Best error: {best_error} during epoch {best_error_epoch}')
     best_probe = torch.load(f'probes/best_prob_{coords[0]}_{coords[1]}_lay{lay}.pt')
-    print(errorfn(best_probe, vali_dl))
+    print(errorfn(best_probe, val_dataloader))
     torch.save(best_probe, f'probes/{int(best_error)}_good_prob_{coords[0]}_{coords[1]}_lay{lay}.pt')
 
 enc_dict, dec_dict, encode, decode = read_enc_dec_dicts(6)
@@ -139,22 +139,29 @@ oth_mod = torch.load('nets/99_good.pt')
 
 lay = 4
 
-activation_data_10 = create_activation_data(oth_mod, lay, just_games_ten)
-#print(activation_data_10)
+activation_data = create_activation_data(oth_mod, lay, just_games_ten)
 
 cutoff = int(0.9*len(boards_me_ten))
-train_activation_data_10 = activation_data_10[:cutoff]
+train_activation_data = activation_data[:cutoff]
 train_boards_me_ten = boards_me_ten[:cutoff]
-val_activation_data_10 = activation_data_10[cutoff:]
+val_activation_data = activation_data[cutoff:]
 val_boards_me_ten = boards_me_ten[cutoff:]
 
-train_dataset = act_to_cell_state(1, 1, train_activation_data_10, train_boards_me_ten)
-vali_dataset = act_to_cell_state(1, 1, val_activation_data_10, val_boards_me_ten)
-train_dl = DataLoader(train_dataset, batch_size=100, shuffle=True)
-vali_dl = DataLoader(vali_dataset, batch_size=100, shuffle=True)
+coord = [1, 1]
 
-prob_1_1 = lin_prob(1280)
-if torch.cuda.is_available():
-    prob_1_1.to('cuda')
+def train_probe_for_coord(coord):
 
-train_probe(prob_1_1, train_dl, vali_dl, [1, 1], lay)
+    train_dataset = act_to_cell_state(coord[0], coord[1], train_activation_data, train_boards_me_ten)
+    vali_dataset = act_to_cell_state(coord[0], coord[1], val_activation_data, val_boards_me_ten)
+    train_dl = DataLoader(train_dataset, batch_size=100, shuffle=True)
+    vali_dl = DataLoader(vali_dataset, batch_size=100, shuffle=True)
+
+    probe = lin_prob(1280)
+    if torch.cuda.is_available():
+        probe.to('cuda')
+
+    train_probe(probe, train_dl, vali_dl, [1, 1], lay)
+
+    return probe
+
+probe_1_1 = train_probe_for_coord(coord)

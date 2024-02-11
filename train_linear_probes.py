@@ -137,7 +137,9 @@ just_games_ten = torch.tensor(just_games)
 
 oth_mod = torch.load('nets/99_good.pt')
 
-lay = 4
+lay = 7
+#num_of_lay = 8
+board_dim = 6
 
 activation_data = create_activation_data(oth_mod, lay, just_games_ten)
 
@@ -146,8 +148,6 @@ train_activation_data = activation_data[:cutoff]
 train_boards_me_ten = boards_me_ten[:cutoff]
 val_activation_data = activation_data[cutoff:]
 val_boards_me_ten = boards_me_ten[cutoff:]
-
-coord = [1, 1]
 
 def train_probe_for_coord(coord):
 
@@ -160,8 +160,21 @@ def train_probe_for_coord(coord):
     if torch.cuda.is_available():
         probe.to('cuda')
 
-    train_probe(probe, train_dl, vali_dl, [1, 1], lay)
+    train_probe(probe, train_dl, vali_dl, coord, lay)
 
     return probe
 
-probe_1_1 = train_probe_for_coord(coord)
+def train_probes_for_layer(layer, board_d):
+    probes_for_cells = []
+    for i in range(board_d):
+        probes_for_row = []
+        for j in range(board_d):
+            probes_for_row.append(train_probe_for_coord([i, j]))
+        probes_for_cells.append(deepcopy(probes_for_row))
+    return deepcopy(probes_for_cells)
+
+
+probes = train_probes_for_layer(8, board_dim)
+
+#for lay in range(num_of_lay):
+

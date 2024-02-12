@@ -5,7 +5,7 @@ import transformer_lens
 import ast
 from copy import deepcopy
 import os
-from train_nets import read_enc_dec_dicts, read_enc_dec_dicts
+from train_nets import read_enc_dec_dicts
 
 def create_activation_data(htransformer, lay_num, games_ten):
     activation_data_list = []
@@ -99,56 +99,6 @@ def train_probe(probe, train_dataloader, val_dataloader, coords, layer):
     print(errorfn(best_probe, val_dataloader))
     torch.save(best_probe, f'probes/{int(best_error)}_good_prob_{coords[0]}_{coords[1]}_lay{lay}.pt')
 
-enc_dict, dec_dict, encode, decode = read_enc_dec_dicts(6)
-
-print(decode(encode(['A0', 'B0', 'p'])))
-
-with open('data/data_boards_me.txt', 'r') as f:
-    data_boards_me = f.read()
-
-boards_me = ast.literal_eval(data_boards_me)
-print(f'Data set size: {len(boards_me)}')
-#cut_out = int((1/50) * len(boards_me))
-#boards_me = boards_me[:cut_out]
-
-me_enc_dict = {'x':0, 'm':1, 'e':2}
-
-for i in range(len(boards_me)):
-    for board in boards_me[i][1]:
-        for row in board:
-            for j in range(len(row)):
-                row[j] = me_enc_dict[row[j]]
-
-
-just_boards = [game_board_pair[1] for game_board_pair in boards_me]
-
-for sing_game_boards in just_boards:
-    while len(sing_game_boards) < 33:
-        sing_game_boards.append(deepcopy(sing_game_boards[-1]))
-
-boards_me_ten = torch.tensor(just_boards)
-#if torch.cuda.is_available():
-#    boards_me_ten = boards_me_ten.to('cuda')
-print(boards_me_ten[0][0])
-print(boards_me_ten[0][:, 1, 1])
-
-just_games = [encode(game_board_pair[0]) for game_board_pair in boards_me]
-just_games_ten = torch.tensor(just_games)
-
-oth_mod = torch.load('nets/99_good.pt')
-
-lay = 7
-#num_of_lay = 8
-board_dim = 6
-
-activation_data = create_activation_data(oth_mod, lay, just_games_ten)
-
-cutoff = int(0.9*len(boards_me_ten))
-train_activation_data = activation_data[:cutoff]
-train_boards_me_ten = boards_me_ten[:cutoff]
-val_activation_data = activation_data[cutoff:]
-val_boards_me_ten = boards_me_ten[cutoff:]
-
 def train_probe_for_coord(coord):
 
     train_dataset = act_to_cell_state(coord[0], coord[1], train_activation_data, train_boards_me_ten)
@@ -173,8 +123,60 @@ def train_probes_for_layer(layer, board_d):
         probes_for_cells.append(deepcopy(probes_for_row))
     return deepcopy(probes_for_cells)
 
+if __name__ == '__main__':
 
-probes = train_probes_for_layer(8, board_dim)
+    enc_dict, dec_dict, encode, decode = read_enc_dec_dicts(6)
 
-#for lay in range(num_of_lay):
+    print(decode(encode(['A0', 'B0', 'p'])))
+
+    with open('data/data_boards_me.txt', 'r') as f:
+        data_boards_me = f.read()
+
+    boards_me = ast.literal_eval(data_boards_me)
+    print(f'Data set size: {len(boards_me)}')
+    #cut_out = int((1/50) * len(boards_me))
+    #boards_me = boards_me[:cut_out]
+
+    me_enc_dict = {'x':0, 'm':1, 'e':2}
+
+    for i in range(len(boards_me)):
+        for board in boards_me[i][1]:
+            for row in board:
+                for j in range(len(row)):
+                    row[j] = me_enc_dict[row[j]]
+
+
+    just_boards = [game_board_pair[1] for game_board_pair in boards_me]
+
+    for sing_game_boards in just_boards:
+        while len(sing_game_boards) < 33:
+            sing_game_boards.append(deepcopy(sing_game_boards[-1]))
+
+    boards_me_ten = torch.tensor(just_boards)
+    #if torch.cuda.is_available():
+    #    boards_me_ten = boards_me_ten.to('cuda')
+    print(boards_me_ten[0][0])
+    print(boards_me_ten[0][:, 1, 1])
+
+    just_games = [encode(game_board_pair[0]) for game_board_pair in boards_me]
+    just_games_ten = torch.tensor(just_games)
+
+    oth_mod = torch.load('nets/99_good.pt')
+
+    lay = 7
+    #num_of_lay = 8
+    board_dim = 6
+
+    activation_data = create_activation_data(oth_mod, lay, just_games_ten)
+
+    cutoff = int(0.9*len(boards_me_ten))
+    train_activation_data = activation_data[:cutoff]
+    train_boards_me_ten = boards_me_ten[:cutoff]
+    val_activation_data = activation_data[cutoff:]
+    val_boards_me_ten = boards_me_ten[cutoff:]
+
+
+    probes = train_probes_for_layer(8, board_dim)
+
+    #for lay in range(num_of_lay):
 

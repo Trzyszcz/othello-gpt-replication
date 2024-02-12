@@ -4,6 +4,7 @@ import transformer_lens
 import ast
 import gen_oth
 from train_nets import show_moves_from_tensor, read_enc_dec_dicts
+from train_linear_probes import lin_prob
 
 #get model
 
@@ -13,17 +14,6 @@ oth_mod = torch.load('activation_gen/40_12_90_6.pt')
 enc_dict, dec_dict, encode, decode = read_enc_dec_dicts(6)
 
 print(decode(encode(['A0', 'B0', 'p'])))
-
-#get probe
-class lin_prob(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.innards = nn.Sequential(
-                nn.Linear(360, 3)
-                )
-    def forward(self, x):
-        return self.innards(x)
-
 
 probe = torch.load('activation_gen/lay9/92_good_prob_1_1.pt')
 

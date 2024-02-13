@@ -14,7 +14,9 @@ print(decode(encode(['A0', 'B0', 'p'])))
 
 #get game
 
-game_to_inter = ['B2', 'B3', 'C4', 'B5', 'A4', 'A3', 'C5', 'D5', 'B4', 'A5', 'E4', 'F3', 'F5', 'A2', 'D4', 'B1', 'A0', 'C1', 'D1', 'C0', 'A1', 'F4', 'E5', 'D0', 'F2', 'B0', 'E1', 'E2', 'E3', 'F1', 'E0', 'F0']
+#game_to_inter = ['B2', 'B3', 'C4', 'B5', 'A4', 'A3', 'C5', 'D5', 'B4', 'A5', 'E4', 'F3', 'F5', 'A2', 'D4', 'B1', 'A0', 'C1', 'D1', 'C0', 'A1', 'F4', 'E5', 'D0', 'F2', 'B0', 'E1', 'E2', 'E3', 'F1', 'E0', 'F0']
+
+game_to_inter = ['E3', 'E4', 'B2', 'B1', 'B0', 'A0', 'C1', 'D1', 'E1', 'A3', 'C0', 'E2', 'B3', 'E0', 'F0', 'C4', 'F4', 'F3', 'C5', 'A1', 'F5', 'A4', 'A2', 'D0', 'F1', 'D4', 'B4', 'D5', 'F2', 'E5', 'A5', 'B5']
 
 game_to_inter_enc = torch.tensor(encode(['s'] + game_to_inter[:-1]))
 #print board state after some move
@@ -36,9 +38,14 @@ def find_probe_for_cell(coord, layer, probes_names_list):
     for path in probes_names_list:
         if path.endswith(f'{coord[0]}_{coord[1]}_lay{layer}.pt'):
             probe = torch.load(os.path.join('probes', path))
+            ##this part is for testing bug
+            #probe = lin_prob(1280)
+            #if torch.cuda.is_available():
+            #    probe.to('cuda')
             return probe
 
 probes = load_probes(6, 7, inside_probes_folder)
+ 
 
 me_enc_dict = {'x':0, 'm':1, 'e':2}
 me_dec_list = ['x', 'm', 'e']

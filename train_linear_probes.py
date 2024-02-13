@@ -27,7 +27,7 @@ class act_to_cell_state(Dataset):
             cell_states = boards[i][:, cell_coord_y, cell_coord_y]
             for j in range(32):
                 act = activations[i][j]
-                cell_state = cell_states[j+1]
+                cell_state = cell_states[j]
                 if torch.cuda.is_available():
                     cell_state = cell_state.to('cuda')
                 self.act_cell_state_pairs.append([act, cell_state])
@@ -123,8 +123,8 @@ def train_probes_for_layer(layer, board_d):
         probes_for_cells.append(deepcopy(probes_for_row))
     return deepcopy(probes_for_cells)
 
+#def train_lin_probes_main():
 if __name__ == '__main__':
-
     enc_dict, dec_dict, encode, decode = read_enc_dec_dicts(6)
 
     print(decode(encode(['A0', 'B0', 'p'])))
@@ -158,7 +158,7 @@ if __name__ == '__main__':
     print(boards_me_ten[0][0])
     print(boards_me_ten[0][:, 1, 1])
 
-    just_games = [encode(game_board_pair[0]) for game_board_pair in boards_me]
+    just_games = [encode(['s'] + game_board_pair[0][:-1]) for game_board_pair in boards_me]
     just_games_ten = torch.tensor(just_games)
 
     oth_mod = torch.load('nets/99_good.pt')
@@ -175,8 +175,12 @@ if __name__ == '__main__':
     val_activation_data = activation_data[cutoff:]
     val_boards_me_ten = boards_me_ten[cutoff:]
 
-
+    #probe = train_probe_for_coord([1, 1])
     probes = train_probes_for_layer(8, board_dim)
 
     #for lay in range(num_of_lay):
+
+#if __name__ == '__main__':
+#    train_lin_probes_main()
+
 

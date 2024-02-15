@@ -9,13 +9,13 @@ from train_linear_probes import lin_prob
 #get model
 
 
-oth_mod = torch.load('activation_gen/40_12_90_6.pt')
+oth_mod = torch.load('nets/99_good.pt')
 
 enc_dict, dec_dict, encode, decode = read_enc_dec_dicts(6)
 
 print(decode(encode(['A0', 'B0', 'p'])))
 
-probe = torch.load('activation_gen/lay9/92_good_prob_1_1.pt')
+probe = torch.load('probes/95_good_prob_1_1_lay7.pt')
 
 #get vectors from probe
 
@@ -29,6 +29,7 @@ weights = [x[1] for x in probe.named_parameters() if x[0]=='innards.0.weight']
 print(weights)
 
 enemy_vector = weights[0][2]
+print(enemy_vector)
 
 #get game
 
@@ -81,7 +82,7 @@ def ortho_proj(eq_vector, t_vector):
 
     #print(eq_vector * (dot_prod/(eq_vector.T @ eq_vector)))
 
-    projected_vector = t_vector - 20*(eq_vector * (dot_prod/(eq_vector.T @ eq_vector)))
+    projected_vector = t_vector - (eq_vector * (dot_prod/(eq_vector.T @ eq_vector)))
 
     return projected_vector
 
@@ -105,7 +106,7 @@ logits = oth_mod.run_with_hooks(
         game_to_inter_enc,
         return_type='logits',
         fwd_hooks=[(
-            'blocks.9.mlp.hook_pre',
+            'blocks.7.mlp.hook_pre',
             ortho_proj_hook
             )]
         )

@@ -21,16 +21,17 @@ def create_activation_data(htransformer, lay_num, games_ten):
 
 class act_to_cell_state(Dataset):
     def __init__(self, cell_coord_x, cell_coord_y, activations, boards):
-        self.size = len(activations)
+        act_len = len(activations)
         self.act_cell_state_pairs = []
-        for i in range(self.size):
-            cell_states = boards[i][:, cell_coord_y, cell_coord_y]
+        for i in range(act_len):
+            cell_states = boards[i][:, cell_coord_x, cell_coord_y]
             for j in range(32):
                 act = activations[i][j]
                 cell_state = cell_states[j]
                 if torch.cuda.is_available():
                     cell_state = cell_state.to('cuda')
                 self.act_cell_state_pairs.append([act, cell_state])
+        self.size = len(self.act_cell_state_pairs)
     def __len__(self):
         return self.size
     def __getitem__(self, idx):
@@ -65,7 +66,7 @@ def train_probe(probe, train_dataloader, val_dataloader, coords, layer):
     lossfn = nn.CrossEntropyLoss()
     opt = torch.optim.Adam(probe.parameters(), lr=5e-6)
 
-    epochs = 800
+    epochs = 100
 
     print('start training')
 
@@ -80,7 +81,7 @@ def train_probe(probe, train_dataloader, val_dataloader, coords, layer):
             opt.zero_grad()
             train_pred = probe(train_in)
             train_loss = lossfn(train_pred, train_tar)
-            if idx%10==0:
+            if idx%1000==0:
                 with torch.no_grad():
                     print(train_loss.item())
                     error_rate = errorfn(probe, val_dataloader)

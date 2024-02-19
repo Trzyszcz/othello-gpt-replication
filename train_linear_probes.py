@@ -98,7 +98,7 @@ def train_probe(probe, train_dataloader, val_dataloader, coords, layer):
     print(f'Best error: {best_error} during epoch {best_error_epoch}')
     best_probe = torch.load(f'probes/best_prob_{coords[0]}_{coords[1]}_lay{lay}.pt')
     print(errorfn(best_probe, val_dataloader))
-    torch.save(best_probe, f'probes/{int(best_error)}_good_prob_{coords[0]}_{coords[1]}_lay{lay}.pt')
+    torch.save(best_probe, f'probes/lay{lay}/{int(best_error)}_good_prob_{coords[0]}_{coords[1]}_lay{lay}.pt')
 
 def train_probe_for_coord(coord):
 
@@ -164,22 +164,24 @@ if __name__ == '__main__':
 
     oth_mod = torch.load('nets/99_good.pt')
 
-    lay = 7
+    #lay = 1
+    layers = [0, 2, 3, 4, 5, 6]
     #num_of_lay = 8
     board_dim = 6
 
-    activation_data = create_activation_data(oth_mod, lay, just_games_ten)
+    for lay in layers:
+        activation_data = create_activation_data(oth_mod, lay, just_games_ten)
 
-    cutoff = int(0.9*len(boards_me_ten))
-    train_activation_data = activation_data[:cutoff]
-    train_boards_me_ten = boards_me_ten[:cutoff]
-    val_activation_data = activation_data[cutoff:]
-    val_boards_me_ten = boards_me_ten[cutoff:]
+        cutoff = int(0.9*len(boards_me_ten))
+        train_activation_data = activation_data[:cutoff]
+        train_boards_me_ten = boards_me_ten[:cutoff]
+        val_activation_data = activation_data[cutoff:]
+        val_boards_me_ten = boards_me_ten[cutoff:]
 
-    #probe = train_probe_for_coord([1, 1])
-    probes = train_probes_for_layer(8, board_dim)
+        probe = train_probe_for_coord([1, 2])
+        #probes = train_probes_for_layer(lay, board_dim)
 
-    #for lay in range(num_of_lay):
+        #for lay in range(num_of_lay):
 
 #if __name__ == '__main__':
 #    train_lin_probes_main()

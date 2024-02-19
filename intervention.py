@@ -15,7 +15,11 @@ enc_dict, dec_dict, encode, decode = read_enc_dec_dicts(6)
 
 print(decode(encode(['A0', 'B0', 'p'])))
 
-probe = torch.load('probes/95_good_prob_1_1_lay7.pt')
+layer = 7
+
+#probe = torch.load('probes/95_good_prob_1_1_lay7.pt')
+probe = torch.load('probes/lay7/95_good_prob_1_2_lay7.pt')
+#probe = torch.load('probes/89_good_prob_1_2_lay1.pt')
 
 #get vectors from probe
 
@@ -25,15 +29,20 @@ me_enc_dict = {'x':0, 'm':1, 'e':2}
 
 weights = [x[1] for x in probe.named_parameters() if x[0]=='innards.0.weight']
 #bias = [x[1] for x in probe.named_parameters() if x[0]=='innards.0.bias']
+
 #print(weights.shape)
 print(weights)
 
 enemy_vector = weights[0][2]
+empty_vector = weights[0][0]
+my_vector = weights[0][1]
 print(enemy_vector)
 
 #get game
 
 game_to_inter = ['B2', 'B3', 'C4', 'B5', 'A4', 'A3', 'C5', 'D5', 'B4', 'A5', 'E4', 'F3', 'F5', 'A2', 'D4', 'B1', 'A0', 'C1', 'D1', 'C0', 'A1', 'F4', 'E5', 'D0', 'F2', 'B0', 'E1', 'E2', 'E3', 'F1', 'E0', 'F0']
+
+move_to_change = 20
 
 game_to_inter_enc = torch.tensor(encode(['s'] + game_to_inter[:-1]))
 
@@ -42,12 +51,10 @@ game_to_inter_enc = torch.tensor(encode(['s'] + game_to_inter[:-1]))
 game1 = gen_oth.oth(6)
 turn = 0
 color = ['b', 'w']
-x, y = 'B 2'.split()
-game1.move(int(game1.dec_dict[x]), int(y), color[turn])
-turn = (turn+1)%2
-gx, y = 'B 3'.split()
-game1.move(int(game1.dec_dict[x]), int(y), color[turn])
-turn = (turn+1)%2
+for move in range(move_to_change):
+    x, y = game_to_inter[move]
+    game1.move(int(game1.dec_dict[x]), int(y), color[turn])
+    turn = (turn+1)%2
 game1.print_board()
 
 #print suggested moves
@@ -56,7 +63,7 @@ logits = oth_mod.forward(game_to_inter_enc)
 #print(logits.shape)
 probs = nn.functional.softmax(logits, dim=-1)
 print('before intervention:')
-show_moves_from_tensor(probs[0][2])
+show_moves_from_tensor(probs[0][move_to_change])
 
 #add hook
 
@@ -94,10 +101,14 @@ def ortho_proj_test():
     t2 = torch.tensor([-3, -2])
     print(ortho_proj(a, t2))
 
+def intervention(add_vector, subt_vector, activation_vector):
+    return activation_vector + ((-20)*subt_vector) + (20*add_vector)
+
 def ortho_proj_hook(value, hook):
     print('hook activated')
     #print(value[:, 2])
-    value[:, 2] = ortho_proj(enemy_vector, value[:, 2])
+    #value[:, 2] = ortho_proj(enemy_vector, value[:, 2])
+    value = intervention(my_vector, enemy_vector, value)
     #print(value[:, 2])
     return value
 #activation_data_part = htransformer.run_with_cache(games_ten[i*100:(i+1)*100], names_filter=f'blocks.{lay_num}.mlp.hook_pre', device='cpu')[1][f'blocks.{lay_num}.mlp.hook_pre']
@@ -106,14 +117,14 @@ logits = oth_mod.run_with_hooks(
         game_to_inter_enc,
         return_type='logits',
         fwd_hooks=[(
-            'blocks.7.mlp.hook_pre',
+            f'blocks.{layer}.mlp.hook_pre',
             ortho_proj_hook
             )]
         )
 #print(logits.shape)
 probs = nn.functional.softmax(logits, dim=-1)
 print('after intervention:')
-show_moves_from_tensor(probs[0][2])
+show_moves_from_tensor(probs[0][move_to_change])
 
 
 #print suggested moves

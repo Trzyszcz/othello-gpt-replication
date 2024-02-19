@@ -22,7 +22,9 @@ game_to_inter_enc = torch.tensor(encode(['s'] + game_to_inter[:-1]))
 #print board state after some move
 #get probes
 
-inside_probes_folder = os.listdir('./probes')
+lay = 7
+
+inside_probes_folder = os.listdir(f'./probes/lay{lay}')
 
 def load_probes(board_dim, layer, probes_names_list):
     probes = []
@@ -37,14 +39,14 @@ def load_probes(board_dim, layer, probes_names_list):
 def find_probe_for_cell(coord, layer, probes_names_list):
     for path in probes_names_list:
         if path.endswith(f'{coord[0]}_{coord[1]}_lay{layer}.pt'):
-            probe = torch.load(os.path.join('probes', path))
+            probe = torch.load(os.path.join(f'probes/lay{layer}', path))
             ##this part is for testing bug
             #probe = lin_prob(1280)
             #if torch.cuda.is_available():
             #    probe.to('cuda')
             return probe
 
-probes = load_probes(6, 7, inside_probes_folder)
+probes = load_probes(6, lay, inside_probes_folder)
  
 
 me_enc_dict = {'x':0, 'm':1, 'e':2}
@@ -109,7 +111,7 @@ game1 = gen_oth.oth(6)
 turn = 0
 color = ['b', 'w']
 
-activations = oth_mod.run_with_cache(game_to_inter_enc, names_filter='blocks.7.mlp.hook_pre', device='cuda')[1]['blocks.7.mlp.hook_pre'][0]
+activations = oth_mod.run_with_cache(game_to_inter_enc, names_filter=f'blocks.{lay}.mlp.hook_pre', device='cuda')[1][f'blocks.{lay}.mlp.hook_pre'][0]
 print(activations.shape)
 
 

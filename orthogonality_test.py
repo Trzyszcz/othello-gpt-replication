@@ -63,20 +63,30 @@ def every_on_every(board_dim, probes_table, probe_type):
     
     return result_table
 
-res_table = every_on_every(6, probes, 2)
+def every_on_every_board_format(board_dim, probes_table, probe_type):
+    res_table = []
+
+    for i in range(board_dim):
+        row_res_table = []
+        for j in range(board_dim):
+            probes_cell = []
+            base_probe = probes_table[i][j].get_parameter('innards.0.weight')[probe_type]
+            for k in range(board_dim):
+                probes_row = []
+                for l in range(board_dim):
+                    probe_k_l = probes_table[k][l].get_parameter('innards.0.weight')[probe_type]
+                    dot_prod = (base_probe.T@probe_k_l).item()
+                    probes_row.append(dot_prod - (dot_prod%0.01))
+                probes_cell.append(deepcopy(probes_row))
+            row_res_table.append(deepcopy(probes_cell))
+        res_table.append(deepcopy(row_res_table))
+
+    return res_table
+
+res_table = every_on_every_board_format(6, probes, 2)
 
 #pprint(result_table)
 result_ten = torch.tensor(res_table)
-
-for idx, row in enumerate(res_table):
-    print(row[:idx])
-
-for i in range(36):
-    result_ten[i, i] = 0
-
-print(result_ten)
-print(torch.argmax(result_ten))
-print(result_ten[3, 4])
 
 with open('list.txt', 'x') as f:
     f.write(result_ten.tolist().__str__())

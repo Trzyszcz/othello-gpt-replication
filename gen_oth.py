@@ -2,6 +2,7 @@ import random
 from copy import deepcopy
 import ast
 from datetime import datetime
+import tqdm
 
 class oth:
     def __init__(self, board_size):
@@ -339,11 +340,11 @@ def generate_game(board_size, whole_board_state=False):
     if not whole_board_state:
         return moves
     else:
-        return [moves, stack_board_states]
+        return (moves, stack_board_states)
 
 def generate_games(board_size, number_of_games, whole_board_state=False):
 
-    data_file = open(f'data/data{board_size}.txt', 'w')
+    data_file = open(f'data/data{board_size}.txt', 'a')
     for i in range(number_of_games):
         moves = generate_game(board_size, whole_board_state)
         for tok in moves:
@@ -352,21 +353,17 @@ def generate_games(board_size, number_of_games, whole_board_state=False):
     data_file.close()
 
 def generate_games_boards(board_size, number_of_games, whole_board_state=True):
-    data_bw_file = open(f'data/data_boards_bw_{number_of_games}.txt', 'w')
-    data_me_file = open(f'data/data_boards_me_{number_of_games}.txt', 'w')
-    data_bw = []
-    data_me = []
-    for i in range(number_of_games):
-        moves = generate_game(board_size, whole_board_state)
-        data_bw.append(moves)
-        data_me.append([moves[0], change_wb_to_my_enemys(moves[1])])
-        if i % 1000 == 0:
-            print('.', end='')
-    data_bw_file.write(data_bw.__str__())
-    data_me_file.write(data_me.__str__())
-    data_bw_file.close()
-    data_me_file.close()
-    print('\n')
+
+    with open(f'data/data_boards_bw_{number_of_games}.txt', 'w') as data_bw_file, open(f'data/data_boards_me_{number_of_games}.txt', 'w') as data_me_file:
+        data_bw = []
+        data_me = []
+        for i in tqdm(range(number_of_games)):
+            moves, stack_board_states = generate_game(board_size, whole_board_state)
+            data_bw.append(moves)
+            data_me.append([moves, change_wb_to_my_enemys(stack_board_states)])
+        data_bw_file.write(str(data_bw))
+        data_me_file.write(str(data_me))
+        print('\n')
 
 #on black on even moves, white on odd ones
 def change_wb_to_my_enemys(stack_board_states):
@@ -444,4 +441,6 @@ def pvp_game(board_size):
 
 if __name__ == '__main__':
     pvp_game(6)
+    #generate_games(6, 4000000, whole_board_state=False)
+
 

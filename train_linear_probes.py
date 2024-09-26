@@ -9,8 +9,10 @@ from train_nets import read_enc_dec_dicts
 
 def create_activation_data(htransformer, lay_num, games_ten):
     activation_data_list = []
+    #TODO move to Dataset
     for i in range(100):
-        activation_data_part = htransformer.run_with_cache(games_ten[i*100:(i+1)*100], names_filter=f'blocks.{lay_num}.mlp.hook_pre', device='cpu')[1][f'blocks.{lay_num}.mlp.hook_pre']
+        #activation_data_part = htransformer.run_with_cache(games_ten[i*100:(i+1)*100], names_filter=f'blocks.{lay_num}.mlp.hook_pre', device='cpu')[1][f'blocks.{lay_num}.mlp.hook_pre']
+        activation_data_part = htransformer.run_with_cache(games_ten[i*100:(i+1)*100], names_filter=f'blocks.{lay_num}.hook_resid_post', device='cpu')[1][f'blocks.{lay_num}.hook_resid_post']
         activation_data_list.append(activation_data_part)
 
     activation_data = torch.cat(activation_data_list, dim=0)
@@ -19,7 +21,7 @@ def create_activation_data(htransformer, lay_num, games_ten):
         activation_data = activation_data.to('cuda')
     return activation_data
 
-class act_to_cell_state(Dataset):
+class act_to_cell_state(Dataset): #TODO camel case classes
     def __init__(self, cell_coord_x, cell_coord_y, activations, boards):
         act_len = len(activations)
         self.act_cell_state_pairs = []
@@ -27,7 +29,7 @@ class act_to_cell_state(Dataset):
             cell_states = boards[i][:, cell_coord_x, cell_coord_y]
             for j in range(32):
                 act = activations[i][j]
-                cell_state = cell_states[j]
+                cell_state = cell_states[j] #TODO print if indexes are correct, for christ sake
                 if torch.cuda.is_available():
                     cell_state = cell_state.to('cuda')
                 self.act_cell_state_pairs.append([act, cell_state])
@@ -35,11 +37,11 @@ class act_to_cell_state(Dataset):
     def __len__(self):
         return self.size
     def __getitem__(self, idx):
-        X = self.act_cell_state_pairs[idx][0]
+        X = self.act_cell_state_pairs[idx][0] #TODO named tuple here
         y = self.act_cell_state_pairs[idx][1]
         return X, y
 
-class lin_prob(nn.Module):
+class lin_prob(nn.Module): #TODO camel case classes
     def __init__(self, act_space_size):
         super().__init__()
         self.innards = nn.Sequential(
@@ -48,12 +50,12 @@ class lin_prob(nn.Module):
     def forward(self, x):
         return self.innards(x)
 
-def errorfn(transformer, val_dl):
-    dl_len = 0
+def errorfn(transformer, val_dl): #TODO is there pytorch function for that? Accuracy?
+    dl_len = 0 #TODO that's len of guess!
     num_of_corr = 0
     for val_in, val_tar in val_dl:
         val_pred = transformer(val_in)
-        quess = torch.argmax(val_pred, dim=-1)
+        quess = torch.argmax(val_pred, dim=-1) #TODO quess -> guess typo
         #tar = torch.argmax(val_tar, dim=-1)
         for i in range(len(quess)):
             dl_len += 1
@@ -107,8 +109,8 @@ def train_probe_for_coord(coord):
     train_dl = DataLoader(train_dataset, batch_size=100, shuffle=True)
     vali_dl = DataLoader(vali_dataset, batch_size=100, shuffle=True)
 
-    probe = lin_prob(1280)
-    if torch.cuda.is_available():
+    probe = lin_prob(320)
+    if torch.cuda.is_available(): #TODO move ot cude in one place. maybe in training function, global device set to cuda or cpu
         probe.to('cuda')
 
     train_probe(probe, train_dl, vali_dl, coord, lay)
@@ -133,7 +135,7 @@ if __name__ == '__main__':
     with open('data/data_boards_me.txt', 'r') as f:
         data_boards_me = f.read()
 
-    boards_me = ast.literal_eval(data_boards_me)
+    boards_me = ast.literal_eval(data_boards_me) #TODO moves and boards, not just boards, named tuple, data class
     print(f'Data set size: {len(boards_me)}')
     #cut_out = int((1/50) * len(boards_me))
     #boards_me = boards_me[:cut_out]
@@ -142,15 +144,15 @@ if __name__ == '__main__':
 
     for i in range(len(boards_me)):
         for board in boards_me[i][1]:
-            for row in board:
+           for row in board:
                 for j in range(len(row)):
-                    row[j] = me_enc_dict[row[j]]
+                    row[j] = me_enc_dict[row[j]] #TODO unfuck this
 
 
     just_boards = [game_board_pair[1] for game_board_pair in boards_me]
 
     for sing_game_boards in just_boards:
-        while len(sing_game_boards) < 33:
+        while len(sing_game_boards) < 33: #TODO dependent on board dimension
             sing_game_boards.append(deepcopy(sing_game_boards[-1]))
 
     boards_me_ten = torch.tensor(just_boards)
@@ -164,11 +166,11 @@ if __name__ == '__main__':
 
     oth_mod = torch.load('nets/99_good.pt')
 
-    #lay = 1
-    layers = [0, 2, 3, 4, 5, 6]
+    lay = 3
+    #layers = [0, 2, 3, 4, 5, 6]
     #num_of_lay = 8
     board_dim = 6
-
+    '''
     for lay in layers:
         activation_data = create_activation_data(oth_mod, lay, just_games_ten)
 
@@ -179,11 +181,17 @@ if __name__ == '__main__':
         val_boards_me_ten = boards_me_ten[cutoff:]
 
         probe = train_probe_for_coord([1, 2])
-        #probes = train_probes_for_layer(lay, board_dim)
+    '''
+    activation_data = create_activation_data(oth_mod, lay, just_games_ten)
 
-        #for lay in range(num_of_lay):
+    cutoff = int(0.9*len(boards_me_ten))
+    train_activation_data = activation_data[:cutoff]
+    train_boards_me_ten = boards_me_ten[:cutoff]
+    val_activation_data = activation_data[cutoff:]
+    val_boards_me_ten = boards_me_ten[cutoff:]
 
-#if __name__ == '__main__':
-#    train_lin_probes_main()
+    probes = train_probes_for_layer(lay, board_dim)
+
+
 
 

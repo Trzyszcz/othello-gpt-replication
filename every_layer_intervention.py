@@ -5,6 +5,9 @@ import ast
 import gen_oth
 from train_nets import show_moves_from_tensor, read_enc_dec_dicts
 from train_linear_probes import lin_prob
+import os
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 #get model
 
@@ -15,46 +18,48 @@ enc_dict, dec_dict, encode, decode = read_enc_dec_dicts(6)
 
 print(decode(encode(['A0', 'B0', 'p'])))
 
-layer = 3
+#layer = 7
+
+probes_for_layers = []
+for i in range(8):
+    probes_in_folder = os.listdir(f'./probes/lay{i}')
+    for probe_name in probes_in_folder:
+        if probe_name.endswith(f'1_2_lay{i}.pt'):
+            probe = torch.load(os.path.join(f'probes/lay{i}', probe_name))
+            probes_for_layers.append(probe)
 
 #probe = torch.load('probes/95_good_prob_1_1_lay7.pt')
-probe = torch.load('probes/lay4/95_good_prob_1_2_lay4.pt')
-#probe = torch.load('probes/lay4/95_good_prob_4_2_lay4.pt')
-#probe = torch.load('probes/lay3/93_good_prob_1_2_lay3.pt')
-
-#probe = torch.load('probes/lay4/94_good_prob_3_4_lay4.pt')
-
-
+#probe = torch.load('probes/lay7/95_good_prob_1_2_lay7.pt')
 #probe = torch.load('probes/89_good_prob_1_2_lay1.pt')
 
 #get vectors from probe
 
 me_enc_dict = {'x':0, 'm':1, 'e':2}
-#for par in probe.named_parameters():
-#    print(par)
+##for par in probe.named_parameters():
+##    print(par)
 
-weights = [x[1] for x in probe.named_parameters() if x[0]=='innards.0.weight']
-#bias = [x[1] for x in probe.named_parameters() if x[0]=='innards.0.bias']
+#weights = [x[1] for x in probe.named_parameters() if x[0]=='innards.0.weight']
+##bias = [x[1] for x in probe.named_parameters() if x[0]=='innards.0.bias']
 
-#print(weights.shape)
+weights = [probe.get_parameter('innards.0.weight') for probe in probes_for_layers]
+
+##print(weights.shape)
 #print(weights)
 
-enemy_vector = weights[0][2]
-empty_vector = weights[0][0]
-my_vector = weights[0][1]
+#enemy_vector = weights[0][2]
+#empty_vector = weights[0][0]
+#my_vector = weights[0][1]
 #print(enemy_vector)
 
-print('ACHTUNG')
-print((enemy_vector.T@my_vector).item())
-print('ACHTUNG')
-print((enemy_vector.T@enemy_vector).item())
-print((my_vector.T@my_vector).item())
+enemy_vectors = [wei[0][2] for wei in weights]
+empty_vectors = [wei[0][0] for wei in weights]
+my_vectors = [wei[0][1] for wei in weights]
 
 #get game
 
 game_to_inter = ['B2', 'B3', 'C4', 'B5', 'A4', 'A3', 'C5', 'D5', 'B4', 'A5', 'E4', 'F3', 'F5', 'A2', 'D4', 'B1', 'A0', 'C1', 'D1', 'C0', 'A1', 'F4', 'E5', 'D0', 'F2', 'B0', 'E1', 'E2', 'E3', 'F1', 'E0', 'F0']
 
-move_to_change = 10
+move_to_change = 5
 
 game_to_inter_enc = torch.tensor(encode(['s'] + game_to_inter[:-1]))
 
@@ -75,7 +80,7 @@ logits = oth_mod.forward(game_to_inter_enc)
 #print(logits.shape)
 probs = nn.functional.softmax(logits, dim=-1)
 print('before intervention:')
-show_moves_from_tensor(probs[0][move_to_change], prec=0.01)
+show_moves_from_tensor(probs[0][move_to_change])
 
 #add hook
 
@@ -101,36 +106,9 @@ def ortho_proj(eq_vector, t_vector):
 
     #print(eq_vector * (dot_prod/(eq_vector.T @ eq_vector)))
 
-    projected_vector = t_vector - (10*(eq_vector * (dot_prod/(eq_vector.T @ eq_vector))))
+    projected_vector = t_vector - (eq_vector * (dot_prod/(eq_vector.T @ eq_vector)))
 
     return projected_vector
-
-def ortho_proj_new(eq_vector, t_vector, val):
-    #takes vector with parameters of equation describing subset of activation space which probe grades with value 1 (interpreted as a vector it is one orthagonal
-    #to the n-1-dimentional space defined by that equation) and vector named t_vector. It return orthagonal projection of t_vector on space defined by equation.
-    #in other words, it returns vector most close to t_vector which probe will grade with value 1
-
-    non_zero_idx = len(eq_vector) - 1
-    for i in range(len(eq_vector)):
-        if eq_vector[i] != 0:
-            non_zero_idx = i
-            break
-    non_zero_idx_val = eq_vector[non_zero_idx]
-    transpo_vector = torch.zeros(len(eq_vector))
-    transpo_vector[non_zero_idx] = -val/non_zero_idx_val
-    transpo_vector = transpo_vector.to('cuda')
-    #norm_of_eq_vec = eq_vector.T @ eq_vector
-
-    transpo_t_vector = t_vector - transpo_vector
-
-    dot_prod = eq_vector @ transpo_t_vector.T
-
-    #print(eq_vector * (dot_prod/(eq_vector.T @ eq_vector)))
-
-    projected_vector = t_vector - (2*(eq_vector * (dot_prod/(eq_vector.T @ eq_vector))))
-
-    return projected_vector
-
 
 def ortho_proj_test():
     a = torch.tensor([-1.0, -1.0])
@@ -141,40 +119,54 @@ def ortho_proj_test():
     print(ortho_proj(a, t2))
 
 def intervention(add_vector, subt_vector, activation_vector):
-    return activation_vector + ((-15)*subt_vector) + (15*add_vector)
-
+    return activation_vector + ((-5)*subt_vector) + (5*add_vector)
+'''
 def ortho_proj_hook(value, hook):
     print('hook activated')
-    print(value.shape)
-    activ = value[:, move_to_change][0]
-    print('Activation size squared:')
-    print((activ.T@activ).item())
     #print(value[:, 2])
-    #value[:, move_to_change] = ortho_proj(enemy_vector, value[:, move_to_change])
-    #value[:, move_to_change] = ortho_proj(enemy_vector, value[:, move_to_change], 5)
-    #value[:, move_to_change] = ortho_proj(my_vector, value[:, move_to_change], -5)
-    value[:, move_to_change] = intervention(enemy_vector, my_vector, value[:, move_to_change])
+    #value[:, 2] = ortho_proj(enemy_vector, value[:, 2])
+    value = intervention(my_vector, enemy_vector, value)
     #print(value[:, 2])
     return value
+'''
+def make_oph(i):
+    def ortho_proj_hook(value, hook):
+        print('hook activated')
+        #print(value[:, 2])
+        #value[:, 2] = ortho_proj(enemy_vector, value[:, 2])
+        value = intervention(my_vectors[i], enemy_vectors[i], value)
+        #print(value[:, 2])
+        return value
+    return ortho_proj_hook
 
-def print_my(value, hook):
-    print( (value[:, move_to_change][0].T @ enemy_vector).item())
-    return value
+
+
+inter_list = [make_oph(i) for i in range(8)]
 #activation_data_part = htransformer.run_with_cache(games_ten[i*100:(i+1)*100], names_filter=f'blocks.{lay_num}.mlp.hook_pre', device='cpu')[1][f'blocks.{lay_num}.mlp.hook_pre']
 #run model forward
+'''
 logits = oth_mod.run_with_hooks(
         game_to_inter_enc,
         return_type='logits',
         fwd_hooks=[(
-            f'blocks.{i}.hook_resid_post',
+            f'blocks.{layer}.mlp.hook_pre',
             ortho_proj_hook
-            #print_my
-            ) for i in [4]]
+            )]
         )
+'''
+logits = oth_mod.run_with_hooks(
+        game_to_inter_enc,
+        return_type='logits',
+        fwd_hooks=[(
+            f'blocks.{i}.mlp.hook_pre',
+            inter_list[i]
+         ) for i in range(8)]
+        )
+#
 #print(logits.shape)
 probs = nn.functional.softmax(logits, dim=-1)
 print('after intervention:')
-show_moves_from_tensor(probs[0][move_to_change], prec=0.01)
+show_moves_from_tensor(probs[0][move_to_change])
 
 
 #print suggested moves

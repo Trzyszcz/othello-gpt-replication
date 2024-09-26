@@ -22,7 +22,7 @@ game_to_inter_enc = torch.tensor(encode(['s'] + game_to_inter[:-1]))
 #print board state after some move
 #get probes
 
-lay = 7
+lay = 4
 
 inside_probes_folder = os.listdir(f'./probes/lay{lay}')
 
@@ -111,7 +111,9 @@ game1 = gen_oth.oth(6)
 turn = 0
 color = ['b', 'w']
 
-activations = oth_mod.run_with_cache(game_to_inter_enc, names_filter=f'blocks.{lay}.mlp.hook_pre', device='cuda')[1][f'blocks.{lay}.mlp.hook_pre'][0]
+#activations = oth_mod.run_with_cache(game_to_inter_enc, names_filter=f'blocks.{lay}.mlp.hook_pre', device='cuda')[1][f'blocks.{lay}.mlp.hook_pre'][0]
+activations = oth_mod.run_with_cache(game_to_inter_enc, names_filter=f'blocks.{lay}.hook_resid_post', device='cuda')[1][f'blocks.{lay}.hook_resid_post'][0]
+
 print(activations.shape)
 
 

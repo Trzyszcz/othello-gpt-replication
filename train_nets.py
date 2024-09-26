@@ -14,10 +14,10 @@ def create_enc_dec_dicts(vocab, board_size):
     dec_dict = {num:tok for num, tok in enumerate(vocab)}
 
     with open(f'enc_dec_dicts/enc_dict{board_size}.txt', 'x') as f:
-        f.write(enc_dict.__str__())
+        f.write(str(enc_dict))
 
     with open(f'enc_dec_dicts/dec_dict{board_size}.txt', 'x') as f:
-        f.write(dec_dict.__str__())
+        f.write(str(dec_dict))
 
     encode = lambda tok_lst: [enc_dict[tok] for tok in tok_lst]
     decode = lambda num_lst: [dec_dict[num] for num in num_lst]
@@ -39,15 +39,15 @@ def read_enc_dec_dicts(board_size):
 
     return enc_dict, dec_dict, encode, decode
 
-def show_moves_from_tensor(tens):
+def show_moves_from_tensor(tens, prec=0.0001):
     _, _, _, decode = read_enc_dec_dicts(6)
 
     for i in range(len(tens)):
-        if tens[i].item() >= 0.0001:
+        if tens[i].item() >= prec:
             print('{} : {:.3f}'.format(decode([i])[0], tens[i].item()))
 
 if __name__ == '__main__':
-    data_file = open('data6.txt', 'r')
+    data_file = open('data/data6.txt', 'r')
     lines = []
     for line in data_file:
         lines.append(['s'] + line.split(', ')[:-1])
@@ -91,8 +91,8 @@ if __name__ == '__main__':
             y = self.data[idx][1:]
             return X, y
 
-    train_dl = DataLoader(Oth_dataset(train_data), batch_size=200, shuffle=True)
-    val_dl = DataLoader(Oth_dataset(val_data), batch_size=100, shuffle=True)
+    train_dl = DataLoader(Oth_dataset(train_data), batch_size=100, shuffle=True)
+    val_dl = DataLoader(Oth_dataset(val_data), batch_size=30, shuffle=True)
     val_iter = iter(val_dl)
 
     print('data constructed')
@@ -159,7 +159,7 @@ if __name__ == '__main__':
         return percent_of_cor
 
     #cfg = HookedTransformerConfig(n_layers=12, d_model=90, n_ctx=32, d_head=6, d_vocab=vocab_size, act_fn='gelu')
-    cfg = HookedTransformerConfig(n_layers=8, d_model=480, n_ctx=32, d_head=60, d_vocab=vocab_size, act_fn='gelu')
+    cfg = HookedTransformerConfig(n_layers=6, d_model=560, n_ctx=32, d_head=70, d_vocab=vocab_size, act_fn='gelu')
 
     oth_net = HookedTransformer(cfg)
 
@@ -171,7 +171,7 @@ if __name__ == '__main__':
     lossfn = nn.CrossEntropyLoss()
     opt = torch.optim.AdamW(oth_net.parameters(), lr=1e-4)
 
-    epochs = 20
+    epochs = 15
 
     now = datetime.now()
     current_time_start = now.strftime('%H:%M:%S')

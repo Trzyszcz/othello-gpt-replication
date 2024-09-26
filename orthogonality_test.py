@@ -84,20 +84,23 @@ def every_on_every_board_format(board_dim, probes_table, probe_type):
     return res_table
 
 res_table = every_on_every_board_format(6, probes, 2)
-
+'''
 #pprint(result_table)
 result_ten = torch.tensor(res_table)
 
 with open('list.txt', 'x') as f:
     f.write(result_ten.tolist().__str__())
+'''
 
-'''
-a = torch.rand(4, 4)
+a = torch.rand(4, 4, 4, 4)
 a_lst = a.tolist()
-sns.heatmap(a_lst, annot=True, cmap="YlGnBu")
+for i in range(4):
+    for j in range(4):
+        sns.heatmap(a_lst[i][j], annot=True, cmap="YlGnBu")
 #sns.heatmap(result_ten.tolist(), annot=True, cmap="YlGnBu")
+fig.colorbar(axs[1].collections[0], cax=axs[2])
 plt.show()
-'''
+
 
 '''
 #get vectors from probe

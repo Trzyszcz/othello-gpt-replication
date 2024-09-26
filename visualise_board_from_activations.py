@@ -8,6 +8,9 @@ import os
 from copy import deepcopy
 from train_nets import read_enc_dec_dicts
 
+me_enc_dict = {'x':0, 'm':1, 'e':2}
+me_dec_list = ['x', 'm', 'e']
+
 def load_probes(board_dim, layer, probes_names_list):
     probes = []
     for i in range(board_dim):

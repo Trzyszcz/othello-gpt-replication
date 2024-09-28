@@ -10,7 +10,6 @@ import os
 
 #get model
 
-
 oth_mod = torch.load('nets/99_good.pt')
 
 enc_dict, dec_dict, encode, decode = read_enc_dec_dicts(6)
@@ -19,13 +18,50 @@ enc_dict, dec_dict, encode, decode = read_enc_dec_dicts(6)
 
 layer = 4
 
+
+#get game
+
+game_to_inter = ['B2', 'B3', 'C4', 'B5', 'A4', 'A3', 'C5', 'D5', 'B4', 'A5', 'E4', 'F3', 'F5', 'A2', 'D4', 'B1', 'A0', 'C1', 'D1', 'C0', 'A1', 'F4', 'E5', 'D0', 'F2', 'B0', 'E1', 'E2', 'E3', 'F1', 'E0', 'F0']
+
+move_to_change = 23
+
+game_to_inter_enc = torch.tensor(encode(['s'] + game_to_inter[:-1]))
+
+activations = oth_mod.run_with_cache(game_to_inter_enc, names_filter=f'blocks.{layer}.hook_resid_post', device='cuda')[1][f'blocks.{layer}.hook_resid_post'][0]
+
+
+#print board state after some move
+
+game1 = gen_oth.oth(6)
+turn = 0
+color = ['b', 'w']
+for move in range(move_to_change):
+    x, y = game_to_inter[move]
+    game1.move(int(game1.dec_dict[x]), int(y), color[turn])
+    turn = (turn+1)%2
+game1.print_board()
+
+#get user input
+row = input("Row:")
+column = int(input("Column:"))
+
+row_letters = "ABCDEFGH"
+if row in row_letters:
+    row = row_letters.index(row)
+row = int(row)
+
+#get probe
+
 inside_probes_folder = os.listdir(f'./probes/lay{layer}')
 probes = load_probes(6, layer, inside_probes_folder)
 
 
 #probe = torch.load('probes/95_good_prob_1_1_lay7.pt')
 #probe = torch.load('probes/lay4/95_good_prob_1_2_lay4.pt')
-probe = torch.load('probes/lay4/98_good_prob_5_3_lay4.pt')
+
+#probe = torch.load('probes/lay4/98_good_prob_5_3_lay4.pt')
+probe = probes[row][column]
+
 #probe = torch.load('probes/lay4/95_good_prob_4_2_lay4.pt')
 #probe = torch.load('probes/lay3/93_good_prob_1_2_lay3.pt')
 
@@ -53,27 +89,6 @@ empty_vector = weights[0][0]
 my_vector = weights[0][1]
 
 
-#get game
-
-game_to_inter = ['B2', 'B3', 'C4', 'B5', 'A4', 'A3', 'C5', 'D5', 'B4', 'A5', 'E4', 'F3', 'F5', 'A2', 'D4', 'B1', 'A0', 'C1', 'D1', 'C0', 'A1', 'F4', 'E5', 'D0', 'F2', 'B0', 'E1', 'E2', 'E3', 'F1', 'E0', 'F0']
-
-move_to_change = 23
-
-game_to_inter_enc = torch.tensor(encode(['s'] + game_to_inter[:-1]))
-
-activations = oth_mod.run_with_cache(game_to_inter_enc, names_filter=f'blocks.{layer}.hook_resid_post', device='cuda')[1][f'blocks.{layer}.hook_resid_post'][0]
-
-
-#print board state after some move
-
-game1 = gen_oth.oth(6)
-turn = 0
-color = ['b', 'w']
-for move in range(move_to_change):
-    x, y = game_to_inter[move]
-    game1.move(int(game1.dec_dict[x]), int(y), color[turn])
-    turn = (turn+1)%2
-game1.print_board()
 
 print("imaginary board before intervention:")
 show_imaginary_board(activations[move_to_change], probes, turn) 

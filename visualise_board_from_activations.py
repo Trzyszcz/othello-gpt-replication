@@ -123,9 +123,9 @@ if __name__ == '__main__':
     
     
     for i in range(len(game_to_inter)):
-        print('True board:')
+        print(f'True board, move {i}:')
         game1.print_board()
-        print('Imaginary board:')
+        print(f'Imaginary board move {i}:')
         show_imaginary_board(activations[i], probes, turn)
         x, y = tuple(game_to_inter[i])
         game1.move(int(game1.dec_dict[x]), int(y), color[turn])

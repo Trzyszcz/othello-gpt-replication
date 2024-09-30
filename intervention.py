@@ -52,7 +52,7 @@ row = int(row)
 
 
 
-intervention_layer = [int(inp_str) for inp_str in input("Intervention layers (separated by spaces: ").split()]
+intervention_layer = [int(inp_str) for inp_str in input("Intervention layers (separated by spaces): ").split()]
 scaling_parameter = float(input("Scaling parameter: "))
 
 #get probe
@@ -61,19 +61,8 @@ inside_probes_folder = os.listdir(f'./probes/lay{layer}')
 probes = load_probes(6, layer, inside_probes_folder)
 
 
-#probe = torch.load('probes/95_good_prob_1_1_lay7.pt')
-#probe = torch.load('probes/lay4/95_good_prob_1_2_lay4.pt')
-
-#probe = torch.load('probes/lay4/98_good_prob_5_3_lay4.pt')
 probe = probes[row][column]
 
-#probe = torch.load('probes/lay4/95_good_prob_4_2_lay4.pt')
-#probe = torch.load('probes/lay3/93_good_prob_1_2_lay3.pt')
-
-#probe = torch.load('probes/lay4/94_good_prob_3_4_lay4.pt')
-
-
-#probe = torch.load('probes/89_good_prob_1_2_lay1.pt')
 
 #get vectors from probe
 

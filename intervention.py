@@ -42,13 +42,15 @@ for move in range(move_to_change):
 game1.print_board()
 
 #get user input
-row = input("Row:")
-column = int(input("Column:"))
+row = input("Row: ")
+column = int(input("Column: "))
 
 row_letters = "ABCDEFGH"
 if row in row_letters:
     row = row_letters.index(row)
 row = int(row)
+
+intervention_layer = [int(inp_str) for inp_str in input("Intervention layers (separated by spaces: ").split()]
 
 #get probe
 
@@ -130,7 +132,7 @@ logits = oth_mod.run_with_hooks(
             f'blocks.{i}.hook_resid_post',
             ortho_proj_hook
             #print_my
-            ) for i in [2]]
+            ) for i in intervention_layer]
         )
 #print(logits.shape)
 probs = nn.functional.softmax(logits, dim=-1)

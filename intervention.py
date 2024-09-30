@@ -50,7 +50,10 @@ if row in row_letters:
     row = row_letters.index(row)
 row = int(row)
 
+
+
 intervention_layer = [int(inp_str) for inp_str in input("Intervention layers (separated by spaces: ").split()]
+scaling_parameter = float(input("Scaling parameter: "))
 
 #get probe
 
@@ -106,7 +109,7 @@ show_moves_from_tensor(probs[0][move_to_change], prec=0.01)
 #add hook
 
 def intervention(add_vector, subt_vector, activation_vector):
-    return activation_vector + ((-20)*subt_vector) + (20*add_vector)
+    return activation_vector + (( (-1) * scaling_parameter)*subt_vector) + (scaling_parameter*add_vector)
 
 def ortho_proj_hook(value, hook):
     #print('hook activated')

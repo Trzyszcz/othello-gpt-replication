@@ -50,7 +50,7 @@ if row in row_letters:
     row = row_letters.index(row)
 row = int(row)
 
-
+inter_type = input("Intervention type:\n1) enemy to mine\n2) mine to enemy\n")
 
 intervention_layer = [int(inp_str) for inp_str in input("Intervention layers (separated by spaces): ").split()]
 scaling_parameter = float(input("Scaling parameter: "))
@@ -82,7 +82,12 @@ enemy_vector = weights[0][2]
 empty_vector = weights[0][0]
 my_vector = weights[0][1]
 
-
+if inter_type == "1":
+    vect_to_subt = enemy_vector
+    vect_to_add = my_vector
+else:
+    vect_to_subt = my_vector
+    vect_to_add = enemy_vector
 
 print("imaginary board before intervention:")
 show_imaginary_board(activations[move_to_change], probes, turn) 
@@ -107,7 +112,7 @@ def ortho_proj_hook(value, hook):
     #print('Activation size squared:')
     #print((activ.T@activ).item())
     #print(value[:, 2])
-    value[:, move_to_change] = intervention(enemy_vector, my_vector, value[:, move_to_change])
+    value[:, move_to_change] = intervention(vect_to_add, vect_to_subt, value[:, move_to_change])
     print("imaginary board after intervention:")
     show_imaginary_board(value[:, move_to_change], probes, turn)
     #print(value[:, 2])

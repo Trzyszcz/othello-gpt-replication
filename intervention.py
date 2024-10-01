@@ -3,10 +3,32 @@ from torch import nn
 import transformer_lens
 import ast
 import gen_oth
-from train_nets import show_moves_from_tensor, read_enc_dec_dicts
+from train_nets import read_enc_dec_dicts
 from train_linear_probes import lin_prob
 from visualise_board_from_activations import show_imaginary_board, load_probes
 import os
+
+def likely_moves_from_tensor(tens, prec=0.0001):
+    _, _, _, decode = read_enc_dec_dicts(6)
+
+    moves_dict = {}
+
+    for i in range(len(tens)):
+        if tens[i].item() >= prec:
+            moves_dict[decode([i])[0]] = tens[i].item()
+    return moves_dict
+
+def print_moves_from_dict(new_dict,  prec=0.0001):
+    for key in new_dict:
+        print('{} : {:.3f}'.format(key, new_dict[key]))
+
+def print_moves_from_dict_with_dif(old_dict, new_dict,  prec=0.0001):
+    for key in new_dict:
+        if key in old_dict:
+            print('{} : {:.3f}'.format(key, new_dict[key]))
+        else:
+            print('\033[92m{} : {:.3f}\033[00m'.format(key, new_dict[key]))
+
 
 #get model
 
@@ -104,7 +126,8 @@ logits = oth_mod.forward(game_to_inter_enc)
 #print(logits.shape)
 probs = nn.functional.softmax(logits, dim=-1)
 print('Legal moves before intervention:')
-show_moves_from_tensor(probs[0][move_to_change], prec=0.01)
+pre_inter_dict = likely_moves_from_tensor(probs[0][move_to_change], prec=0.01)
+print_moves_from_dict(pre_inter_dict, prec=0.01)
 print("")
 
 #add hook
@@ -142,7 +165,8 @@ logits = oth_mod.run_with_hooks(
 #print(logits.shape)
 probs = nn.functional.softmax(logits, dim=-1)
 print('Legal moves after intervention:')
-show_moves_from_tensor(probs[0][move_to_change], prec=0.01)
+post_inter_dict = likely_moves_from_tensor(probs[0][move_to_change], prec=0.01)
+print_moves_from_dict_with_dif(pre_inter_dict, post_inter_dict, prec=0.01)
 
 
 #print suggested moves

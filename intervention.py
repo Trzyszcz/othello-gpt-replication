@@ -41,6 +41,11 @@ for move in range(move_to_change):
     turn = (turn+1)%2
 game1.print_board()
 
+if turn == 0:
+    print("Black to move")
+else:
+    print("White to move")
+
 #get user input
 row = input("Row: ")
 column = int(input("Column: "))
@@ -52,8 +57,9 @@ row = int(row)
 
 inter_type = input("Intervention type:\n1) enemy to mine\n2) mine to enemy\n")
 
-intervention_layer = [int(inp_str) for inp_str in input("Intervention layers (separated by spaces): ").split()]
+intervention_layers = [int(inp_str) for inp_str in input("Intervention layers (separated by spaces): ").split()]
 scaling_parameter = float(input("Scaling parameter: "))
+print("")
 
 #get probe
 
@@ -89,9 +95,9 @@ else:
     vect_to_subt = my_vector
     vect_to_add = enemy_vector
 
-print("imaginary board before intervention:")
+print("Imaginary board before intervention:")
 show_imaginary_board(activations[move_to_change], probes, turn) 
-
+print("")
 #print suggested moves
 
 logits = oth_mod.forward(game_to_inter_enc)
@@ -99,6 +105,7 @@ logits = oth_mod.forward(game_to_inter_enc)
 probs = nn.functional.softmax(logits, dim=-1)
 print('Legal moves before intervention:')
 show_moves_from_tensor(probs[0][move_to_change], prec=0.01)
+print("")
 
 #add hook
 
@@ -113,8 +120,9 @@ def ortho_proj_hook(value, hook):
     #print((activ.T@activ).item())
     #print(value[:, 2])
     value[:, move_to_change] = intervention(vect_to_add, vect_to_subt, value[:, move_to_change])
-    print("imaginary board after intervention:")
+    print("Imaginary board after intervention:")
     show_imaginary_board(value[:, move_to_change], probes, turn)
+    print("")
     #print(value[:, 2])
     return value
 
@@ -129,7 +137,7 @@ logits = oth_mod.run_with_hooks(
             f'blocks.{i}.hook_resid_post',
             ortho_proj_hook
             #print_my
-            ) for i in intervention_layer]
+            ) for i in intervention_layers]
         )
 #print(logits.shape)
 probs = nn.functional.softmax(logits, dim=-1)

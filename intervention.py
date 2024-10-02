@@ -32,7 +32,7 @@ def print_moves_from_dict_with_dif(old_dict, new_dict,  prec=0.0001):
 
 #get model
 
-oth_mod = torch.load('nets/99_good.pt')
+oth_mod = torch.load('nets/oth_net.pt')
 
 enc_dict, dec_dict, encode, decode = read_enc_dec_dicts(6)
 
@@ -43,7 +43,10 @@ layer = 4
 
 #get game
 
-game_to_inter = ['B2', 'B3', 'C4', 'B5', 'A4', 'A3', 'C5', 'D5', 'B4', 'A5', 'E4', 'F3', 'F5', 'A2', 'D4', 'B1', 'A0', 'C1', 'D1', 'C0', 'A1', 'F4', 'E5', 'D0', 'F2', 'B0', 'E1', 'E2', 'E3', 'F1', 'E0', 'F0']
+#game_to_inter = ['B2', 'B3', 'C4', 'B5', 'A4', 'A3', 'C5', 'D5', 'B4', 'A5', 'E4', 'F3', 'F5', 'A2', 'D4', 'B1', 'A0', 'C1', 'D1', 'C0', 'A1', 'F4', 'E5', 'D0', 'F2', 'B0', 'E1', 'E2', 'E3', 'F1', 'E0', 'F0']
+
+with open("./games/game_to_inter") as file:
+    game_to_inter = file.readline().split(", ")
 
 move_to_change = 23
 

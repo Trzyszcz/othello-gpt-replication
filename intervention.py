@@ -48,7 +48,60 @@ layer = 4
 with open("./games/game_to_inter") as file:
     game_to_inter = file.readline().split(", ")
 
-move_to_change = 23
+color = ['b', 'w']
+games_for_printing_moves_list = []
+
+for i in range(len(game_to_inter)):
+    game1 = gen_oth.oth(6)
+    turn = 0
+    for move in range(i):
+        x, y = game_to_inter[move]
+        game1.move(int(game1.dec_dict[x]), int(y), color[turn])
+        turn = (turn+1)%2
+    #game1.print_board()
+    games_for_printing_moves_list.append(game1)
+
+games_for_printing_moves_list[0].print_board()
+current_move = 0
+comm = input("N for next move, P for previous, or number of a move, I to make intervention: ")
+
+while comm != "I":
+    flag = 0
+    if comm == "N":
+        flag = 1
+        if current_move != 31:
+            current_move += 1
+            games_for_printing_moves_list[current_move].print_board()
+        else:
+            print("That's the last move. Choose different command.")
+    if comm == "P":
+        flag = 1
+        if current_move != 0:
+            current_move -= 1
+            games_for_printing_moves_list[current_move].print_board()
+        else:
+            print("That's the first move. Choose different command.")
+    if comm.isdigit():
+        flag = 1
+        move_num = int(comm)
+        if move_num >= 0 and move_num <= 31:
+            current_move = move_num
+            games_for_printing_moves_list[current_move].print_board()
+        else:
+            print("Number outside of <0, 32>. Choose different command.")
+    if flag == 0:
+       print("Command not recognised. Choose different command.")
+
+    comm = input("N for next move, P for previous, or number of a move, I to make intervention: ")
+
+if (current_move%2) == 0:
+    print("Black to move")
+else:
+    print("White to move")
+
+move_to_change = current_move
+
+#move_to_change = 23
 
 game_to_inter_enc = torch.tensor(encode(['s'] + game_to_inter[:-1]))
 
@@ -56,20 +109,6 @@ activations = oth_mod.run_with_cache(game_to_inter_enc, names_filter=f'blocks.{l
 
 
 #print board state after some move
-
-game1 = gen_oth.oth(6)
-turn = 0
-color = ['b', 'w']
-for move in range(move_to_change):
-    x, y = game_to_inter[move]
-    game1.move(int(game1.dec_dict[x]), int(y), color[turn])
-    turn = (turn+1)%2
-game1.print_board()
-
-if turn == 0:
-    print("Black to move")
-else:
-    print("White to move")
 
 #get user input
 row = input("Row: ")

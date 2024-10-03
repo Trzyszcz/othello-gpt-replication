@@ -28,6 +28,9 @@ def print_moves_from_dict_with_dif(old_dict, new_dict,  prec=0.0001):
             print('{} : {:.3f}'.format(key, new_dict[key]))
         else:
             print('\033[92m{} : {:.3f}\033[00m'.format(key, new_dict[key]))
+    for key in old_dict:
+        if not (key in new_dict):
+            print('\033[91m{} : 0.0\033[00m'.format(key))
 
 
 #get model

@@ -110,69 +110,11 @@ activations = oth_mod.run_with_cache(game_to_inter_enc, names_filter=f'blocks.{l
 
 #print board state after some move
 
-#get user input
-row = input("Row: ")
-column = int(input("Column: "))
-
-row_letters = "ABCDEFGH"
-if row in row_letters:
-    row = row_letters.index(row)
-row = int(row)
-
-inter_type = input("Intervention type:\n1) enemy to mine\n2) mine to enemy\n")
-
-intervention_layers = [int(inp_str) for inp_str in input("Intervention layers (separated by spaces): ").split()]
-scaling_parameter = float(input("Scaling parameter: "))
-print("")
-
-#get probe
-
 inside_probes_folder = os.listdir(f'./probes/lay{layer}')
 probes = load_probes(6, layer, inside_probes_folder)
 
-
-probe = probes[row][column]
-
-
-#get vectors from probe
-
 me_enc_dict = {'x':0, 'm':1, 'e':2}
 me_dec_list = ['x', 'm', 'e']
-
-#for par in probe.named_parameters():
-#    print(par)
-
-weights = [x[1] for x in probe.named_parameters() if x[0]=='innards.0.weight']
-#bias = [x[1] for x in probe.named_parameters() if x[0]=='innards.0.bias']
-
-#print(weights.shape)
-#print(weights)
-
-enemy_vector = weights[0][2]
-empty_vector = weights[0][0]
-my_vector = weights[0][1]
-
-if inter_type == "1":
-    vect_to_subt = enemy_vector
-    vect_to_add = my_vector
-else:
-    vect_to_subt = my_vector
-    vect_to_add = enemy_vector
-
-print("Imaginary board before intervention:")
-show_imaginary_board(activations[move_to_change], probes, turn) 
-print("")
-#print suggested moves
-
-logits = oth_mod.forward(game_to_inter_enc)
-#print(logits.shape)
-probs = nn.functional.softmax(logits, dim=-1)
-print('Legal moves before intervention:')
-pre_inter_dict = likely_moves_from_tensor(probs[0][move_to_change], prec=0.01)
-print_moves_from_dict(pre_inter_dict, prec=0.01)
-print("")
-
-#add hook
 
 def intervention(add_vector, subt_vector, activation_vector):
     return activation_vector + (( (-1) * scaling_parameter)*subt_vector) + (scaling_parameter*add_vector)
@@ -195,20 +137,86 @@ def print_my(value, hook):
     print( (value[:, move_to_change][0].T @ enemy_vector).item())
     return value
 
-logits = oth_mod.run_with_hooks(
-        game_to_inter_enc,
-        return_type='logits',
-        fwd_hooks=[(
-            f'blocks.{i}.hook_resid_post',
-            ortho_proj_hook
-            #print_my
-            ) for i in intervention_layers]
-        )
-#print(logits.shape)
-probs = nn.functional.softmax(logits, dim=-1)
-print('Legal moves after intervention:')
-post_inter_dict = likely_moves_from_tensor(probs[0][move_to_change], prec=0.01)
-print_moves_from_dict_with_dif(pre_inter_dict, post_inter_dict, prec=0.01)
+#get user input for intervention
 
+command_inp = ""
+row_letters = "ABCDEFGH"
 
-#print suggested moves
+while command_inp != "Q":
+    row = input("Row: ")
+    column = int(input("Column: "))
+
+    if row in row_letters:
+        row = row_letters.index(row)
+    row = int(row)
+    
+    inter_type = input("Intervention type:\n1) enemy to mine\n2) mine to enemy\n")
+    
+    intervention_layers = [int(inp_str) for inp_str in input("Intervention layers (separated by spaces): ").split()]
+    scaling_parameter = float(input("Scaling parameter: "))
+    print("")
+    
+    #get probe
+    
+    probe = probes[row][column]
+    
+    #get vectors from probe
+    
+    #for par in probe.named_parameters():
+    #    print(par)
+    
+    weights = [x[1] for x in probe.named_parameters() if x[0]=='innards.0.weight']
+    #bias = [x[1] for x in probe.named_parameters() if x[0]=='innards.0.bias']
+    
+    #print(weights.shape)
+    #print(weights)
+    
+    enemy_vector = weights[0][2]
+    empty_vector = weights[0][0]
+    my_vector = weights[0][1]
+    
+    if inter_type == "1":
+        vect_to_subt = enemy_vector
+        vect_to_add = my_vector
+    else:
+        vect_to_subt = my_vector
+        vect_to_add = enemy_vector
+    
+    print("Imaginary board before intervention:")
+    show_imaginary_board(activations[move_to_change], probes, turn) 
+    print("")
+    #print suggested moves
+    
+    logits = oth_mod.forward(game_to_inter_enc)
+    #print(logits.shape)
+    probs = nn.functional.softmax(logits, dim=-1)
+    print('Legal moves before intervention:')
+    pre_inter_dict = likely_moves_from_tensor(probs[0][move_to_change], prec=0.01)
+    print_moves_from_dict(pre_inter_dict, prec=0.01)
+    print("")
+    
+    #add hook
+    
+    logits = oth_mod.run_with_hooks(
+            game_to_inter_enc,
+            return_type='logits',
+            fwd_hooks=[(
+                f'blocks.{i}.hook_resid_post',
+                ortho_proj_hook
+                #print_my
+                ) for i in intervention_layers]
+            )
+    #print(logits.shape)
+    probs = nn.functional.softmax(logits, dim=-1)
+    print('Legal moves after intervention:')
+    post_inter_dict = likely_moves_from_tensor(probs[0][move_to_change], prec=0.01)
+    print_moves_from_dict_with_dif(pre_inter_dict, post_inter_dict, prec=0.01)
+
+    command_inp = input("\nFor another intervention I, Q for quiting the program: ")
+
+    if command_inp == "I":
+        games_for_printing_moves_list[current_move].print_board()
+        if (current_move%2) == 0:
+            print("Black to move")
+        else:
+            print("White to move")

@@ -14,7 +14,7 @@ Pytorch and transformer_lens libraries are needed.
 # How it works
 
 To intervene on a custom game, write your game to games/game_to_inter file, with moves separated by ", ". It uses notation in which columns are numbered from 0 to 5.
-Then open _intervention.py_ using python3
+Then open `intervention.py` using python3
 ![image](https://github.com/user-attachments/assets/e667c57d-e2af-487d-9fde-21102d475d68)
 
 Now you can chose move on which you want to intervene, by navigating forward, backward or jumping to specific one. To chose current move enter "I"
@@ -37,7 +37,7 @@ Finally, additional legal moves according to model after intervention are printe
 As you can see, "imaginary board after intervention" isn't very sensible, although this is the state after layer 2, there are still six more layers to correct it (or the probes don't read the internal representation of the board that well,
 or model's internal representation isn't that precice).
 
-_gen_oth.py_ can be used to generate data for training model to predict moves for a board of a arbitraty even size bigger than 2.
-_train_nets.py_ can be used to train model.
-_train_linear_probes.py_ can be used to train probes.
-_visualise_board_from_activations.py_ can be used to print "imaginary board state" after every move in the game.
+`gen_oth.py` can be used to generate data for training model to predict moves for a board of a arbitraty even size bigger than 2.
+`train_nets.py` can be used to train model.
+`train_linear_probes.py` can be used to train probes.
+`visualise_board_from_activations.py` can be used to print "imaginary board state" after every move in the game.

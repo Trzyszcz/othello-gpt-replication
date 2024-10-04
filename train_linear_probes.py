@@ -29,7 +29,7 @@ class act_to_cell_state(Dataset): #TODO camel case classes
             cell_states = boards[i][:, cell_coord_x, cell_coord_y]
             for j in range(32):
                 act = activations[i][j]
-                cell_state = cell_states[j] #TODO print if indexes are correct, for christ sake
+                cell_state = cell_states[j] #TODO print if indexes are correct
                 if torch.cuda.is_available():
                     cell_state = cell_state.to('cuda')
                 self.act_cell_state_pairs.append([act, cell_state])
@@ -146,7 +146,7 @@ if __name__ == '__main__':
         for board in boards_me[i][1]:
            for row in board:
                 for j in range(len(row)):
-                    row[j] = me_enc_dict[row[j]] #TODO unfuck this
+                    row[j] = me_enc_dict[row[j]] #TODO this is terrible
 
 
     just_boards = [game_board_pair[1] for game_board_pair in boards_me]

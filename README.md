@@ -2,7 +2,7 @@
 
 This code replicates intervention procedure from "Emergent Linear Representations in World Models of Self-Supervised Sequence Models" by Nanda et al. (https://arxiv.org/abs/2309.00941), and provides text UI interface for it.
 Model based on transformer architecture is train to predict legal next moves for game Othello (https://en.wikipedia.org/wiki/Reversi#Othello). It doesn't guess based on given board state, but by predicting next token of game transcription.
-Then linear probes are trained to guess state of individual tiles from state of residual stream, based on an assumtion that network calculates representation of the boards state, with different directions in activation space encoding state
+Then linear probes are trained to guess state of individual tiles from state of residual stream, based on the assumption that network calculates representation of the boards state, with different directions in activation space encoding state
 of different tiles. By moving activation vector at specified layers along those directions we intervene in the forward pass, to flip the state of specific tiles. If model uses this representation of the board state to predict next legal moves,
 such intervention should affect this prediction by making certain moves legal or illegal.
 
@@ -17,16 +17,16 @@ To intervene on a custom game, write your game to games/game_to_inter file, with
 Then open _intervention.py_ using python3
 ![image](https://github.com/user-attachments/assets/e667c57d-e2af-487d-9fde-21102d475d68)
 
-Now you can choose move on which you want to intervene, by navigating forward, backward or jumping to specific one. To choose current move enter "I"
+Now you can chose move on which you want to intervene, by navigating forward, backward or jumping to specific one. To chose current move enter "I"
 
 ![image](https://github.com/user-attachments/assets/cbc916c0-09ab-4c08-b96c-45f003269ae0)
 
-Let say we want to change piece on F3 from white to black. As white is to move now, we want to choose option "mine to enemy" after providing coordinates. This particular intervention works well on layer 2 with scaling parameter 20.
+Let say we want to change piece on F3 from white to black. As white is to move now, we want to chose option "mine to enemy" after providing coordinates. This particular intervention works well on layer 2 with scaling parameter 20.
 
 ![image](https://github.com/user-attachments/assets/73c9e977-6551-4a12-891c-2e1009f00345)
 
-Then program will show us "Imaginary board before intervention". It is the state of the board based on information probes gather form residual stream after choosen layer. The comparison between this and "Imaginary board after intervention"
-is very usefull for choosing scaling parameter - if it is to small, both boards will be identical, if it is to big, the second board will get quite messy. After that we get moves which are legal according to the model before intervention.
+Then program will show us "Imaginary board before intervention". It is the state of the board based on information probes gather form residual stream after chosen layer. The comparison between this and "Imaginary board after intervention"
+is very usefull for chosing scaling parameter - if it is to small, both boards will be identical, if it is to big, the second board will get quite messy. After that we get moves which are legal according to the model before intervention.
 
 ![image](https://github.com/user-attachments/assets/9247da2e-a27a-4384-bda6-b42800854930)
 

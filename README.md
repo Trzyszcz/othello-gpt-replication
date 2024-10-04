@@ -26,7 +26,7 @@ Let say we want to change piece on F3 from white to black. As white is to move n
 ![image](https://github.com/user-attachments/assets/73c9e977-6551-4a12-891c-2e1009f00345)
 
 Then program will show us "Imaginary board before intervention". It is the state of the board based on information probes gather form residual stream after chosen layer. The comparison between this and "Imaginary board after intervention"
-is very usefull for chosing scaling parameter - if it is to small, both boards will be identical, if it is to big, the second board will get quite messy. After that we get moves which are legal according to the model before intervention.
+is very usefull for chosing scaling parameter - if it is to small, both boards will be identical, if it is too big, the second board will get quite messy. After that we get moves which are legal according to the model before intervention.
 
 ![image](https://github.com/user-attachments/assets/9247da2e-a27a-4384-bda6-b42800854930)
 

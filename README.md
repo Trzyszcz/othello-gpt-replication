@@ -13,7 +13,7 @@ Pytorch and transformer_lens libraries are needed.
 
 # How it works
 
-To intervene on a custom game, write your game to games/game_to_inter file, with moves separated by ", ". It uses notation in which columns are numbered from 0 to 5.
+To intervene on a custom game, write your game to `games/game_to_inter` file, with moves separated by ", ". It uses notation in which columns are numbered from 0 to 5.
 Then open `intervention.py` using python3
 ![image](https://github.com/user-attachments/assets/e667c57d-e2af-487d-9fde-21102d475d68)
 
